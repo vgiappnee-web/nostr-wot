@@ -92,6 +92,58 @@
     },
     "learnMoreButton": "Saiba mais"
   },
+  "sdk": {
+    "badge": "SDK JavaScript",
+    "title": "nostr-wot-sdk",
+    "description": "Integre Web of Trust diretamente em sua aplicação JavaScript ou TypeScript com nosso SDK oficial. Funciona com ou sem a extensão do navegador.",
+    "features": {
+      "extensionFirst": {
+        "title": "Design extension-first",
+        "description": "Usa automaticamente a extensão quando disponível, recorre ao oracle"
+      },
+      "typescript": {
+        "title": "Suporte completo a TypeScript",
+        "description": "Definições de tipos completas para uma ótima experiência de desenvolvimento"
+      },
+      "react": {
+        "title": "Hooks React incluídos",
+        "description": "WoTProvider e hook useWoT prontos para usar em apps React"
+      }
+    },
+    "installCommand": "npm install nostr-wot-sdk",
+    "viewDocsButton": "Ver Docs do SDK",
+    "npmButton": "Ver no npm"
+  },
+  "faq": {
+    "title": "Perguntas Frequentes",
+    "description": "Tudo que você precisa saber sobre Web of Trust",
+    "items": {
+      "whatIsWot": {
+        "question": "O que é Web of Trust?",
+        "answer": "Web of Trust mede a distância social—quantos 'saltos' separam você de outro usuário no grafo de seguidos do Nostr. Se você segue alguém, eles estão a 1 salto. Se eles seguem outra pessoa, essa pessoa está a 2 saltos de você. Isso ajuda a filtrar spam e verificar reputação sem listas de bloqueio centralizadas."
+      },
+      "howDoesItWork": {
+        "question": "Como funciona?",
+        "answer": "A Extensão WoT indexa sua lista de seguidos e calcula as distâncias sociais para outros usuários. Apps podem consultar esses dados através da API window.nostr.wot para filtrar conteúdo, priorizar notificações ou verificar identidade—tudo baseado no seu grafo social pessoal."
+      },
+      "isItPrivate": {
+        "question": "Meus dados são privados?",
+        "answer": "Sim. No modo Local, todos os cálculos acontecem no seu navegador—nada sai do seu dispositivo. No modo Remoto, apenas buscas de pubkey são enviadas ao oracle (sem dados de conteúdo). Você também pode auto-hospedar o oracle para controle completo."
+      },
+      "whichBrowsers": {
+        "question": "Quais navegadores são suportados?",
+        "answer": "A extensão funciona em todos os navegadores baseados em Chromium: Chrome, Brave, Edge e Opera. Suporte para Firefox está planejado para uma versão futura."
+      },
+      "isFree": {
+        "question": "É gratuito?",
+        "answer": "Sim, completamente gratuito e de código aberto sob a licença MIT. A extensão, SDK, API Oracle e todo o código fonte estão disponíveis no GitHub."
+      },
+      "howToIntegrate": {
+        "question": "Como integro WoT no meu app?",
+        "answer": "Você tem três opções: usar a API window.nostr.wot da extensão do navegador para consultas do lado do cliente, usar o pacote npm nostr-wot-sdk para uma interface unificada, ou consultar a API REST do Oracle diretamente para integração do lado do servidor."
+      }
+    }
+  },
   "cta": {
     "title": "Pronto para Construir Confiança?",
     "description": "Junte-se ao crescente ecossistema de aplicações Nostr usando Web of Trust. Comece a filtrar spam e construir reputação hoje.",

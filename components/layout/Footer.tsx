@@ -24,7 +24,7 @@ export default function Footer() {
             {/* Social Links */}
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/mappingbitcoin"
+                href="https://github.com/nostr-wot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -86,7 +86,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/mappingbitcoin"
+                  href="https://github.com/nostr-wot"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 dark:text-gray-400 text-sm hover:text-primary transition-colors"

@@ -314,7 +314,7 @@ export default async function MediaKitPage() {
             <LinkButton href="/contact" variant="white">
               {t("cta.contactUs")}
             </LinkButton>
-            <ExternalLinkButton href="https://github.com/mappingbitcoin" variant="white-outline">
+            <ExternalLinkButton href="https://github.com/nostr-wot" variant="white-outline">
               {t("cta.viewOnGitHub")}
             </ExternalLinkButton>
           </div>

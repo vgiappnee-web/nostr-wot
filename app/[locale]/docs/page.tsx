@@ -598,7 +598,7 @@ function Profile({ pubkey }) {
                   <a href="https://www.npmjs.com/package/nostr-wot-sdk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
                     {t("sdk.links.npm")} →
                   </a>
-                  <a href="https://github.com/mappingbitcoin/nostr-wot-sdk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+                  <a href="https://github.com/nostr-wot/nostr-wot-sdk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
                     {t("sdk.links.github")} →
                   </a>
                 </div>

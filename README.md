@@ -10,8 +10,8 @@ Nostr has no central authority to filter spam or verify identity. Web of Trust s
 
 | Project | Description |
 |---------|-------------|
-| [WoT Extension](https://github.com/mappingbitcoin/nostr-wot-extension) | Browser extension exposing `window.nostr.wot` API |
-| [WoT Oracle](https://github.com/mappingbitcoin/wot-oracle) | Backend API for graph queries |
+| [WoT Extension](https://github.com/nostr-wot/nostr-wot-extension) | Browser extension exposing `window.nostr.wot` API |
+| [WoT Oracle](https://github.com/nostr-wot/wot-oracle) | Backend API for graph queries |
 
 ## How It Works
 

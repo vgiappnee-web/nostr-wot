@@ -293,7 +293,7 @@ export default function ContactPage() {
           <h2 className="text-2xl font-bold text-center mb-10">{t("otherWays.title")}</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <a
-              href="https://github.com/mappingbitcoin"
+              href="https://github.com/nostr-wot"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-start gap-4 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary transition-colors"
@@ -305,7 +305,7 @@ export default function ContactPage() {
               </div>
             </a>
             <a
-              href="https://github.com/mappingbitcoin/nostr-wot-extension/issues"
+              href="https://github.com/nostr-wot/nostr-wot-extension/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-start gap-4 bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary transition-colors"

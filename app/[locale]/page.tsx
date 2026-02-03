@@ -24,7 +24,10 @@ import {
   ExtensionIllustration,
   OracleIllustration,
   CTAIllustration,
+  CodeBracketsIcon,
+  ChevronDownIcon,
 } from "@/components/icons";
+import { CodeBlock } from "@/components/ui";
 
 export default async function Home() {
   const t = await getTranslations("home");
@@ -58,6 +61,21 @@ export default async function Home() {
     { title: t("oracle.features.api.title"), description: t("oracle.features.api.description") },
     { title: t("oracle.features.performance.title"), description: t("oracle.features.performance.description") },
     { title: t("oracle.features.selfHost.title"), description: t("oracle.features.selfHost.description") },
+  ];
+
+  const sdkFeatures = [
+    { title: t("sdk.features.extensionFirst.title"), description: t("sdk.features.extensionFirst.description") },
+    { title: t("sdk.features.typescript.title"), description: t("sdk.features.typescript.description") },
+    { title: t("sdk.features.react.title"), description: t("sdk.features.react.description") },
+  ];
+
+  const faqItems = [
+    { question: t("faq.items.whatIsWot.question"), answer: t("faq.items.whatIsWot.answer") },
+    { question: t("faq.items.howDoesItWork.question"), answer: t("faq.items.howDoesItWork.answer") },
+    { question: t("faq.items.isItPrivate.question"), answer: t("faq.items.isItPrivate.answer") },
+    { question: t("faq.items.whichBrowsers.question"), answer: t("faq.items.whichBrowsers.answer") },
+    { question: t("faq.items.isFree.question"), answer: t("faq.items.isFree.answer") },
+    { question: t("faq.items.howToIntegrate.question"), answer: t("faq.items.howToIntegrate.answer") },
   ];
 
   return (
@@ -206,6 +224,76 @@ export default async function Home() {
         </div>
       </Section>
 
+      {/* SDK Section */}
+      <Section padding="lg" className="overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <ScrollReveal animation="fade-right">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-full text-sm font-medium mb-6">
+                <CodeBracketsIcon className="w-4 h-4" />
+                {t("sdk.badge")}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("sdk.title")}</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">{t("sdk.description")}</p>
+              <FeatureList items={sdkFeatures} iconColor="text-emerald-600 dark:text-emerald-400" className="mb-8" />
+              <div className="flex flex-col sm:flex-row gap-4">
+                <LinkButton href="/docs#sdk-setup" className="hover-lift">{t("sdk.viewDocsButton")}</LinkButton>
+                <ExternalLinkButton href="https://www.npmjs.com/package/nostr-wot-sdk" variant="secondary" className="hover-lift">
+                  {t("sdk.npmButton")}
+                </ExternalLinkButton>
+              </div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal animation="fade-left" delay={200}>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-3xl blur-3xl" />
+              <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/40 dark:to-teal-900/40 rounded-3xl p-6 border border-emerald-200 dark:border-emerald-800">
+                <CodeBlock
+                  language="javascript"
+                  code={`import { WoT } from 'nostr-wot-sdk';
+
+const wot = new WoT({
+  useExtension: true,
+  fallback: {
+    oracle: 'https://wot-oracle.mappingbitcoin.com',
+    myPubkey: 'your-pubkey...'
+  }
+});
+
+// Check trust
+const score = await wot.getTrustScore(pubkey);
+const inNetwork = await wot.isInMyWoT(pubkey);`}
+                />
+              </div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </Section>
+
+      {/* FAQ Section */}
+      <Section background="gray" padding="lg">
+        <ScrollReveal animation="fade-up">
+          <SectionHeader title={t("faq.title")} description={t("faq.description")} />
+        </ScrollReveal>
+        <div className="max-w-3xl mx-auto">
+          <div className="space-y-4">
+            {faqItems.map((item, i) => (
+              <ScrollReveal key={i} animation="fade-up" delay={50 + i * 50}>
+                <details className="group bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/50 overflow-hidden">
+                  <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+                    <h3 className="font-semibold text-gray-900 dark:text-white pr-4">{item.question}</h3>
+                    <ChevronDownIcon className="w-5 h-5 text-gray-500 transition-transform group-open:rotate-180 flex-shrink-0" />
+                  </summary>
+                  <div className="px-6 pb-6 pt-0">
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{item.answer}</p>
+                  </div>
+                </details>
+              </ScrollReveal>
+            ))}
+          </div>
+        </div>
+      </Section>
+
       {/* CTA & Newsletter Section */}
       <section className="py-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-900 border-t border-gray-200 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
@@ -216,7 +304,7 @@ export default async function Home() {
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">{t("cta.description")}</p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <LinkButton href="/download" className="hover-lift">{t("cta.getExtensionButton")}</LinkButton>
-                  <ExternalLinkButton href="https://github.com/mappingbitcoin/nostr-wot-extension" variant="secondary" className="hover-lift">
+                  <ExternalLinkButton href="https://github.com/nostr-wot/nostr-wot-extension" variant="secondary" className="hover-lift">
                     {t("cta.viewGithubButton")}
                   </ExternalLinkButton>
                 </div>

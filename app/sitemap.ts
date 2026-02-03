@@ -1,0 +1,49 @@
+import { MetadataRoute } from "next";
+import { locales, defaultLocale } from "@/i18n/config";
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://nostr-wot.com";
+
+// Define all routes with their change frequency and priority
+const routes: {
+  path: string;
+  changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  priority: number;
+}[] = [
+  { path: "", changeFrequency: "weekly", priority: 1.0 },
+  { path: "/features", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/download", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/docs", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/oracle", changeFrequency: "monthly", priority: 0.7 },
+  { path: "/about", changeFrequency: "monthly", priority: 0.6 },
+  { path: "/contact", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/media-kit", changeFrequency: "monthly", priority: 0.4 },
+  { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
+];
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const sitemapEntries: MetadataRoute.Sitemap = [];
+
+  // Generate entries for each route in each locale
+  for (const route of routes) {
+    for (const locale of locales) {
+      // For default locale, we can optionally skip the locale prefix
+      // but for consistency and SEO, we include it for all locales
+      const url = `${BASE_URL}/${locale}${route.path}`;
+
+      sitemapEntries.push({
+        url,
+        lastModified: new Date(),
+        changeFrequency: route.changeFrequency,
+        priority: route.priority,
+        alternates: {
+          languages: Object.fromEntries(
+            locales.map((l) => [l, `${BASE_URL}/${l}${route.path}`])
+          ),
+        },
+      });
+    }
+  }
+
+  return sitemapEntries;
+}

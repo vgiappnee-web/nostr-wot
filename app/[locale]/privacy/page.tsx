@@ -315,7 +315,7 @@ export default async function PrivacyPage() {
               <ul className="list-disc pl-6 text-gray-600 dark:text-gray-400 space-y-2">
                 <li>
                   <a
-                    href="https://github.com/mappingbitcoin/nostr-wot-extension"
+                    href="https://github.com/nostr-wot/nostr-wot-extension"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"
@@ -325,7 +325,7 @@ export default async function PrivacyPage() {
                 </li>
                 <li>
                   <a
-                    href="https://github.com/mappingbitcoin/wot-oracle"
+                    href="https://github.com/nostr-wot/wot-oracle"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:underline"

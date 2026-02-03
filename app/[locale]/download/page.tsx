@@ -84,7 +84,7 @@ export default async function DownloadPage() {
           <ScrollReveal animation="fade-up" delay={500}>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
               {t("browsers.firefoxNotice")}{" "}
-              <a href="https://github.com/mappingbitcoin/nostr-wot-extension" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              <a href="https://github.com/nostr-wot/nostr-wot-extension" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                 {t("browsers.starRepo")}
               </a>{" "}
               {t("browsers.toGetNotified")}
