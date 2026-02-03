@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Header, Footer, PageTransition } from "@/components/layout";
+import { ThemeProvider } from "@/components/providers";
 import { locales, type Locale } from "@/i18n/config";
 import "../globals.css";
 
@@ -74,15 +75,31 @@ export default async function LocaleLayout({ children, params }: Props) {
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const theme = localStorage.getItem('theme') || 'system';
+                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const resolved = theme === 'system' ? (systemDark ? 'dark' : 'light') : theme;
+                document.documentElement.classList.add(resolved);
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
-        <NextIntlClientProvider messages={messages}>
-          <Header />
-          <div className="pt-16">
-            <PageTransition>{children}</PageTransition>
-          </div>
-          <Footer />
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider messages={messages}>
+            <Header />
+            <div className="pt-16">
+              <PageTransition>{children}</PageTransition>
+            </div>
+            <Footer />
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
       {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>

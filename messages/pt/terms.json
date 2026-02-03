@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "title": "Termos e Condições",
+    "description": "Termos e condições para usar os serviços do Nostr Web of Trust, extensão do navegador e API Oracle."
+  },
+  "hero": {
+    "title": "Termos e Condições",
+    "lastUpdated": "Última atualização: Fevereiro 2026"
+  },
+  "intro": {
+    "description": "Por favor, leia estes termos e condições cuidadosamente antes de usar o site do Nostr Web of Trust, a extensão do navegador ou os serviços da API Oracle. Ao acessar ou usar nossos serviços, você concorda em estar vinculado a estes termos."
+  },
+  "contents": {
+    "title": "Índice",
+    "acceptance": "1. Aceitação dos Termos",
+    "license": "2. Licença",
+    "useRestrictions": "3. Restrições de Uso",
+    "extension": "4. Extensão do Navegador",
+    "oracle": "5. API Oracle",
+    "disclaimer": "6. Isenção de Responsabilidade",
+    "limitation": "7. Limitação de Responsabilidade",
+    "changes": "8. Alterações nos Termos",
+    "contact": "9. Contato"
+  },
+  "acceptance": {
+    "title": "1. Aceitação dos Termos",
+    "description": "Ao acessar ou usar o site do Nostr Web of Trust (\"WoT\"), a extensão do navegador, a API Oracle ou quaisquer serviços relacionados, você reconhece que leu, entendeu e concorda em estar vinculado a estes Termos e Condições.",
+    "agreement": "Se você não concordar com qualquer parte destes termos, você não deve usar nossos serviços. Seu uso continuado dos serviços constitui aceitação de quaisquer atualizações ou modificações destes termos."
+  },
+  "license": {
+    "title": "2. Licença",
+    "description": "Nostr Web of Trust é software de código aberto lançado sob a Licença MIT. Isso se aplica à extensão do navegador, API Oracle e todos os repositórios de código associados.",
+    "mitTitle": "Concessão de Licença MIT",
+    "mitDescription": "Sujeito aos termos da Licença MIT, você recebe uma licença gratuita, não exclusiva e mundial para:",
+    "rights": {
+      "use": "Usar o software para qualquer finalidade",
+      "copy": "Copiar e redistribuir o software",
+      "modify": "Modificar e criar trabalhos derivados",
+      "distribute": "Distribuir versões modificadas"
+    }
+  },
+  "useRestrictions": {
+    "title": "3. Restrições de Uso",
+    "description": "Embora nosso software seja de código aberto, você concorda em não:",
+    "items": {
+      "illegal": "Usar os serviços para qualquer finalidade ilegal ou não autorizada",
+      "harm": "Tentar prejudicar, interromper ou interferir com outros usuários ou a rede Nostr",
+      "interfere": "Interferir ou interromper a integridade ou desempenho de nossos serviços",
+      "reverseEngineer": "Tentar sondar, escanear ou testar a vulnerabilidade de nossos sistemas",
+      "impersonate": "Se passar por qualquer pessoa ou entidade ou deturpar sua afiliação",
+      "spam": "Usar os serviços para enviar spam ou assediar outros usuários"
+    }
+  },
+  "extension": {
+    "title": "4. Extensão do Navegador",
+    "description": "A extensão do navegador WoT fornece funcionalidade Web of Trust para aplicativos Nostr. Ao instalar e usar a extensão, você concorda com os seguintes termos:",
+    "functionality": {
+      "title": "Funcionalidade",
+      "description": "A extensão calcula pontuações de confiança com base no seu grafo social e no protocolo Nostr. As pontuações de confiança são medidas subjetivas baseadas em conexões sociais e não devem ser consideradas indicadores absolutos de confiabilidade."
+    },
+    "updates": {
+      "title": "Atualizações",
+      "description": "A extensão pode receber atualizações automáticas através da loja de extensões do seu navegador. Essas atualizações podem incluir correções de bugs, patches de segurança e novos recursos."
+    },
+    "thirdParty": {
+      "title": "Sites de Terceiros",
+      "description": "A extensão interage com sites de clientes Nostr. Não somos responsáveis pelo conteúdo, práticas de privacidade ou funcionalidade de clientes Nostr de terceiros."
+    }
+  },
+  "oracle": {
+    "title": "5. API Oracle",
+    "description": "O WoT Oracle é um serviço backend opcional que fornece cálculos de confiança. O uso da API Oracle está sujeito aos seguintes termos:",
+    "availability": {
+      "title": "Disponibilidade do Serviço",
+      "description": "A API Oracle é fornecida \"conforme disponível\". Não garantimos tempo de atividade ou disponibilidade. Você pode hospedar sua própria instância Oracle usando nosso código de código aberto."
+    },
+    "rateLimit": {
+      "title": "Limitação de Taxa",
+      "description": "As solicitações de API podem estar sujeitas a limitação de taxa para garantir uso justo e proteger a estabilidade do serviço. O uso excessivo pode resultar em restrições de acesso temporárias ou permanentes."
+    },
+    "accuracy": {
+      "title": "Precisão dos Dados",
+      "description": "Os cálculos de confiança são baseados em dados Nostr disponíveis publicamente. Não garantimos a precisão, integridade ou atualidade dos dados ou cálculos."
+    }
+  },
+  "disclaimer": {
+    "title": "6. Isenção de Responsabilidade",
+    "asIs": "OS SERVIÇOS SÃO FORNECIDOS \"COMO ESTÃO\" E \"CONFORME DISPONÍVEIS\" SEM GARANTIAS DE QUALQUER TIPO.",
+    "noWarranty": "Renunciamos expressamente todas as garantias, sejam expressas, implícitas, estatutárias ou de outra forma, incluindo, mas não limitado a:",
+    "items": {
+      "merchantability": "Garantias implícitas de comercialização",
+      "fitness": "Adequação para um propósito particular",
+      "nonInfringement": "Não violação de direitos de terceiros",
+      "accuracy": "Precisão ou confiabilidade das pontuações de confiança"
+    }
+  },
+  "limitation": {
+    "title": "7. Limitação de Responsabilidade",
+    "description": "Na extensão máxima permitida pela lei aplicável, em nenhum caso o Nostr Web of Trust, seus desenvolvedores, contribuidores ou afiliados serão responsáveis por quaisquer danos indiretos, incidentais, especiais, consequentes ou punitivos.",
+    "noLiability": "Isso inclui, sem limitação, danos por perda de lucros, dados, uso, boa vontade ou outras perdas intangíveis, resultantes do seu uso ou incapacidade de usar os serviços."
+  },
+  "changes": {
+    "title": "8. Alterações nos Termos",
+    "description": "Reservamos o direito de modificar estes termos a qualquer momento. As alterações serão efetivas imediatamente após a publicação nesta página.",
+    "notification": "Para alterações significativas, faremos esforços razoáveis para notificar os usuários através do nosso site ou outros canais de comunicação. Seu uso continuado dos serviços após as alterações constitui aceitação dos termos modificados."
+  },
+  "contact": {
+    "title": "9. Contato",
+    "description": "Se você tiver alguma dúvida sobre estes Termos e Condições, por favor",
+    "link": "entre em contato conosco"
+  }
+}

@@ -39,7 +39,26 @@ export {
   LockOutlineIcon,
   CodeOutlineIcon,
   WotExtensionMiniIcon,
+  SunIcon,
+  MoonIcon,
+  GitHubIcon,
+  NostrIcon,
+  XTwitterIcon,
 } from "./UIIcons";
 
 // Illustrations
 export { ExtensionIllustration, OracleIllustration } from "./Illustrations";
+export { CTAIllustration } from "./CTAIllustration";
+
+// Animated Feature Icons (for features page badges)
+export {
+  AnimatedLinkIcon,
+  AnimatedGlobeIcon,
+  AnimatedScaleIcon,
+  AnimatedStatusDot,
+  AnimatedCalculatorIcon,
+  AnimatedWrenchIcon,
+  AnimatedChartIcon,
+  AnimatedLockIcon,
+  AnimatedRocketIcon,
+} from "./AnimatedFeatureIcons";

@@ -80,6 +80,15 @@
       }
     }
   },
+  "buildFromSource": {
+    "title": "Compilar a partir do Código Fonte",
+    "description": "Para máxima segurança, você pode compilar a extensão você mesmo a partir do nosso código aberto. Isso permite verificar exatamente o que você está instalando.",
+    "clone": "Clonar o repositório",
+    "install": "Instalar dependências",
+    "build": "Compilar a extensão",
+    "loadInstructions": "Em seguida, carregue a pasta 'dist' como extensão descompactada no modo desenvolvedor do seu navegador.",
+    "viewOnGitHub": "Ver código no GitHub"
+  },
   "cta": {
     "title": "Pronto para Começar?",
     "subtitle": "Instale a extensão e comece a filtrar spam em minutos.",

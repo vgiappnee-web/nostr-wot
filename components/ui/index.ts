@@ -13,7 +13,21 @@ export { TextArea } from "./TextArea";
 
 export { Badge } from "./Badge";
 
-export { CodeBlock, InlineCode } from "./CodeBlock";
+export { CodeBlock, InlineCode, TerminalBlock } from "./CodeBlock";
+
+// Section components
+export {
+  Section,
+  SectionHeader,
+  FeatureCard,
+  FeatureList,
+  FeatureListItem,
+  StatCard,
+  StatsGrid,
+  ModeCard,
+  StepItem,
+  StepsList,
+} from "./Section";
 
 // Re-export animation components
 export {
@@ -21,3 +35,9 @@ export {
   AnimatedCounter,
   StaggerContainer,
 } from "./ScrollReveal";
+
+export { ThemeToggle } from "./ThemeToggle";
+
+export { LanguageSwitcher } from "./LanguageSwitcher";
+
+export { NewsletterForm } from "./NewsletterForm";

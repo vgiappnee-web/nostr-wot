@@ -7,6 +7,7 @@ import contact from './contact.json';
 import oracle from './oracle.json';
 import mediaKit from './mediaKit.json';
 import privacy from './privacy.json';
+import terms from './terms.json';
 import docs from './docs.json';
 
 const messages = {
@@ -19,6 +20,7 @@ const messages = {
   oracle,
   mediaKit,
   privacy,
+  terms,
   docs,
 };
 

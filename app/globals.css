@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #6366f1;
   --color-primary-dark: #4f46e5;
@@ -769,6 +772,95 @@ body {
   0%, 100% { transform: rotate(0deg); }
   25% { transform: rotate(20deg); }
   75% { transform: rotate(-20deg); }
+}
+
+/* ============================================
+   CTA ILLUSTRATION ANIMATIONS
+   ============================================ */
+
+.animate-rotate-reverse {
+  animation: rotateReverse 30s linear infinite;
+}
+
+@keyframes rotateReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.animate-cta-pulse {
+  animation: ctaPulse 3s ease-in-out infinite;
+}
+
+@keyframes ctaPulse {
+  0%, 100% { r: 35; opacity: 0.05; }
+  50% { r: 45; opacity: 0.1; }
+}
+
+.animate-cta-core {
+  animation: ctaCore 2s ease-in-out infinite;
+}
+
+@keyframes ctaCore {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-orbit-1 { animation: orbitBob 4s ease-in-out infinite; }
+.animate-orbit-2 { animation: orbitBob 4s ease-in-out infinite 0.5s; }
+.animate-orbit-3 { animation: orbitBob 4s ease-in-out infinite 1s; }
+.animate-orbit-4 { animation: orbitBob 4s ease-in-out infinite 1.5s; }
+.animate-orbit-5 { animation: orbitBob 5s ease-in-out infinite 0.2s; }
+.animate-orbit-6 { animation: orbitBob 5s ease-in-out infinite 0.7s; }
+.animate-orbit-7 { animation: orbitBob 5s ease-in-out infinite 1.2s; }
+.animate-orbit-8 { animation: orbitBob 5s ease-in-out infinite 1.7s; }
+
+@keyframes orbitBob {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-travel-1 {
+  animation: travel1 2s ease-in-out infinite;
+}
+
+.animate-travel-2 {
+  animation: travel2 2s ease-in-out infinite 0.5s;
+}
+
+.animate-travel-3 {
+  animation: travel3 2s ease-in-out infinite 1s;
+}
+
+.animate-travel-4 {
+  animation: travel4 2s ease-in-out infinite 1.5s;
+}
+
+@keyframes travel1 {
+  0%, 100% { cy: 64; opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { cy: 88; opacity: 0.8; }
+  90% { opacity: 0.8; }
+}
+
+@keyframes travel2 {
+  0%, 100% { cx: 136; opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { cx: 112; opacity: 0.8; }
+  90% { opacity: 0.8; }
+}
+
+@keyframes travel3 {
+  0%, 100% { cy: 136; opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { cy: 112; opacity: 0.8; }
+  90% { opacity: 0.8; }
+}
+
+@keyframes travel4 {
+  0%, 100% { cx: 64; opacity: 0; }
+  10% { opacity: 0.8; }
+  50% { cx: 88; opacity: 0.8; }
+  90% { opacity: 0.8; }
 }
 
 /* ============================================

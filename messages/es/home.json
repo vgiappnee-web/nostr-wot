@@ -97,5 +97,14 @@
     "description": "Únete al creciente ecosistema de aplicaciones Nostr usando Web of Trust. Comienza a filtrar spam y construir reputación hoy.",
     "getExtensionButton": "Obtener la Extensión",
     "viewGithubButton": "Ver en GitHub"
+  },
+  "newsletter": {
+    "title": "Mantente Actualizado",
+    "description": "Recibe las últimas actualizaciones sobre Nostr Web of Trust, nuevas funciones y noticias del ecosistema.",
+    "placeholder": "Ingresa tu email",
+    "subscribe": "Suscribirse",
+    "subscribing": "Suscribiendo...",
+    "success": "¡Gracias por suscribirte! Te mantendremos informado.",
+    "privacy": "Sin spam, nunca. Cancela cuando quieras."
   }
 }

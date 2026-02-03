@@ -80,6 +80,15 @@
       }
     }
   },
+  "buildFromSource": {
+    "title": "Build from Source",
+    "description": "For maximum security, you can build the extension yourself from our open-source code. This lets you verify exactly what you're installing.",
+    "clone": "Clone the repository",
+    "install": "Install dependencies",
+    "build": "Build the extension",
+    "loadInstructions": "Then load the 'dist' folder as an unpacked extension in your browser's developer mode.",
+    "viewOnGitHub": "View source on GitHub"
+  },
   "cta": {
     "title": "Ready to Get Started?",
     "subtitle": "Install the extension and start filtering spam in minutes.",

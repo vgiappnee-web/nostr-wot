@@ -23,9 +23,13 @@
     "product": "Product",
     "resources": "Resources",
     "legal": "Legal",
-    "privacy": "Privacy",
+    "community": "Community",
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
     "mediaKit": "Media Kit",
-    "copyright": "Open source under MIT License"
+    "copyright": "Open source under MIT License",
+    "tagline": "Open infrastructure for trust-based filtering on Nostr.",
+    "allRightsReserved": "All rights reserved."
   },
   "badge": {
     "openSource": "Open Source Infrastructure for Nostr",

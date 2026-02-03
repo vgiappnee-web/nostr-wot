@@ -2,6 +2,7 @@
   "name": "nostr-wot",
   "version": "0.1.0",
   "private": true,
+  "author": "Leon Acosta <leon@nostr-wot.com>",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

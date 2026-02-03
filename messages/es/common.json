@@ -23,9 +23,13 @@
     "product": "Producto",
     "resources": "Recursos",
     "legal": "Legal",
-    "privacy": "Privacidad",
+    "community": "Comunidad",
+    "privacy": "Política de Privacidad",
+    "terms": "Términos y Condiciones",
     "mediaKit": "Kit de Medios",
-    "copyright": "Código abierto bajo Licencia MIT"
+    "copyright": "Código abierto bajo Licencia MIT",
+    "tagline": "Infraestructura abierta para filtrado basado en confianza en Nostr.",
+    "allRightsReserved": "Todos los derechos reservados."
   },
   "badge": {
     "openSource": "Infraestructura de Código Abierto para Nostr",

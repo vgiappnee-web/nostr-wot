@@ -1,14 +1,102 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { Badge, LinkButton, ExternalLinkButton } from "@/components/ui";
+import { Badge, LinkButton, ExternalLinkButton, Section, SectionHeader, StatCard } from "@/components/ui";
+import { ScrollReveal } from "@/components/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("oracle.meta");
-  return {
-    title: t("title"),
-    description: t("description"),
-  };
+  return { title: t("title"), description: t("description") };
 }
+
+const PERFORMANCE_STATS = [
+  { key: "cachedLatency", value: "<1ms" },
+  { key: "uncachedLatency", value: "<50ms" },
+  { key: "queriesPerSecond", value: "10,000+" },
+  { key: "bidirectionalBfs", value: "O(b^d/2)" },
+];
+
+const ARCHITECTURE_CARDS = ["graphStorage", "pathfinding", "caching", "rateLimiting"];
+
+const CONFIG_ROWS = [
+  { variable: "RELAYS", default: "damus, nos.lol, nostr.band", key: "relays" },
+  { variable: "HTTP_PORT", default: "8080", key: "httpPort" },
+  { variable: "DB_PATH", default: "wot.db", key: "dbPath" },
+  { variable: "RATE_LIMIT_PER_MINUTE", default: "100", key: "rateLimit" },
+  { variable: "CACHE_SIZE", default: "10000", key: "cacheSize" },
+  { variable: "CACHE_TTL_SECS", default: "300", key: "cacheTtl" },
+];
+
+const SELF_HOSTING_BLOCKS = [
+  {
+    key: "docker",
+    code: `# Pull and run the image
+docker pull ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
+
+docker run -d \\
+  -p 8080:8080 \\
+  -v wot-data:/app/data \\
+  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0`,
+  },
+  {
+    key: "dockerCompose",
+    code: `git clone https://github.com/mappingbitcoin/wot-oracle.git
+cd wot-oracle
+docker-compose up -d`,
+  },
+  {
+    key: "fromSource",
+    code: `git clone https://github.com/mappingbitcoin/wot-oracle.git
+cd wot-oracle
+cargo build --release
+./target/release/wot-oracle`,
+  },
+];
+
+const API_ENDPOINTS = [
+  {
+    key: "distance",
+    request: "GET /distance?from=PUBKEY1&to=PUBKEY2",
+    response: `{
+  "from": "PUBKEY1",
+  "to": "PUBKEY2",
+  "distance": 2,
+  "paths": 5,
+  "mutual": false,
+  "bridging_nodes": ["PUBKEY3", "PUBKEY4"]
+}`,
+  },
+  {
+    key: "batch",
+    request: `POST /distance/batch
+Content-Type: application/json
+
+{
+  "from": "PUBKEY1",
+  "targets": ["PUBKEY2", "PUBKEY3", "PUBKEY4"]
+}`,
+    response: `{
+  "from": "PUBKEY1",
+  "results": [
+    { "to": "PUBKEY2", "distance": 1 },
+    { "to": "PUBKEY3", "distance": 2 },
+    { "to": "PUBKEY4", "distance": null }
+  ]
+}`,
+  },
+  {
+    key: "stats",
+    response: `{
+  "total_pubkeys": 1250000,
+  "total_follows": 8500000,
+  "last_sync": "2024-01-15T10:30:00Z",
+  "cache_hit_rate": 0.85
+}`,
+  },
+  {
+    key: "health",
+    response: `{ "status": "healthy", "uptime": 864000 }`,
+  },
+];
 
 export default async function OraclePage() {
   const t = await getTranslations("oracle");
@@ -17,330 +105,150 @@ export default async function OraclePage() {
     <main>
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center">
-            <Badge className="mb-4">{t("hero.badge")}</Badge>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">{t("hero.title")}</h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-              {t("hero.subtitle")}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <ExternalLinkButton href="https://github.com/mappingbitcoin/wot-oracle">
-                {t("hero.viewOnGitHub")}
-              </ExternalLinkButton>
-              <LinkButton href="/docs" variant="secondary">
-                {t("hero.apiDocs")}
-              </LinkButton>
-            </div>
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <Badge className="mb-4">{t("hero.badge")}</Badge>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">{t("hero.title")}</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">{t("hero.subtitle")}</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <ExternalLinkButton href="https://github.com/mappingbitcoin/wot-oracle">{t("hero.viewOnGitHub")}</ExternalLinkButton>
+            <LinkButton href="/docs" variant="secondary">{t("hero.apiDocs")}</LinkButton>
           </div>
         </div>
       </section>
 
       {/* What It Does */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-6">{t("whatItDoes.title")}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-4">
-            {t("whatItDoes.description")}
-          </p>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
-            <strong className="text-gray-900 dark:text-white">{t("whatItDoes.example")}</strong> {t("whatItDoes.exampleText")}
-          </p>
-        </div>
-      </section>
+      <Section padding="md">
+        <SectionHeader title={t("whatItDoes.title")} />
+        <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-4">{t("whatItDoes.description")}</p>
+        <p className="text-lg text-gray-600 dark:text-gray-400 text-center">
+          <strong className="text-gray-900 dark:text-white">{t("whatItDoes.example")}</strong> {t("whatItDoes.exampleText")}
+        </p>
+      </Section>
 
       {/* Performance */}
-      <section className="py-20 bg-gray-100 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">{t("performance.title")}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center border border-gray-200 dark:border-gray-700">
-              <span className="block text-4xl font-bold text-primary mb-2">&lt;1ms</span>
-              <span className="text-gray-600 dark:text-gray-400">{t("performance.cachedLatency")}</span>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center border border-gray-200 dark:border-gray-700">
-              <span className="block text-4xl font-bold text-primary mb-2">&lt;50ms</span>
-              <span className="text-gray-600 dark:text-gray-400">{t("performance.uncachedLatency")}</span>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center border border-gray-200 dark:border-gray-700">
-              <span className="block text-4xl font-bold text-primary mb-2">10,000+</span>
-              <span className="text-gray-600 dark:text-gray-400">{t("performance.queriesPerSecond")}</span>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center border border-gray-200 dark:border-gray-700">
-              <span className="block text-4xl font-bold text-primary mb-2">O(b^d/2)</span>
-              <span className="text-gray-600 dark:text-gray-400">{t("performance.bidirectionalBfs")}</span>
-            </div>
-          </div>
+      <Section background="gray" padding="md">
+        <SectionHeader title={t("performance.title")} />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {PERFORMANCE_STATS.map((stat, i) => (
+            <ScrollReveal key={stat.key} animation="fade-up" delay={i * 100}>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 text-center border border-gray-200 dark:border-gray-700">
+                <span className="block text-4xl font-bold text-primary mb-2">{stat.value}</span>
+                <span className="text-gray-600 dark:text-gray-400">{t(`performance.${stat.key}`)}</span>
+              </div>
+            </ScrollReveal>
+          ))}
         </div>
-      </section>
+      </Section>
 
       {/* API Endpoints */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">{t("apiEndpoints.title")}</h2>
-          <div className="space-y-8">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+      <Section padding="md">
+        <SectionHeader title={t("apiEndpoints.title")} />
+        <div className="space-y-8">
+          {API_ENDPOINTS.map((endpoint) => (
+            <div key={endpoint.key} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-semibold mb-2">
-                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{t("apiEndpoints.distance.title")}</code>
+                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{t(`apiEndpoints.${endpoint.key}.title`)}</code>
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{t("apiEndpoints.distance.description")}</p>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{t(`apiEndpoints.${endpoint.key}.description`)}</p>
               <div className="space-y-3">
+                {endpoint.request && (
+                  <div className="bg-gray-900 rounded-lg overflow-hidden">
+                    <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.request")}</div>
+                    <pre className="p-4 text-sm overflow-x-auto">
+                      <code className="text-gray-100">{endpoint.request}</code>
+                    </pre>
+                  </div>
+                )}
                 <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.request")}</div>
+                  {endpoint.request && <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.response")}</div>}
                   <pre className="p-4 text-sm overflow-x-auto">
-                    <code className="text-gray-100">{`GET /distance?from=PUBKEY1&to=PUBKEY2`}</code>
-                  </pre>
-                </div>
-                <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.response")}</div>
-                  <pre className="p-4 text-sm overflow-x-auto">
-                    <code className="text-gray-100">{`{
-  "from": "PUBKEY1",
-  "to": "PUBKEY2",
-  "distance": 2,
-  "paths": 5,
-  "mutual": false,
-  "bridging_nodes": ["PUBKEY3", "PUBKEY4"]
-}`}</code>
+                    <code className="text-gray-100">{endpoint.response}</code>
                   </pre>
                 </div>
               </div>
             </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-2">
-                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{t("apiEndpoints.batch.title")}</code>
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{t("apiEndpoints.batch.description")}</p>
-              <div className="space-y-3">
-                <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.request")}</div>
-                  <pre className="p-4 text-sm overflow-x-auto">
-                    <code className="text-gray-100">{`POST /distance/batch
-Content-Type: application/json
-
-{
-  "from": "PUBKEY1",
-  "targets": ["PUBKEY2", "PUBKEY3", "PUBKEY4"]
-}`}</code>
-                  </pre>
-                </div>
-                <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-2 text-sm text-gray-400">{t("apiEndpoints.distance.response")}</div>
-                  <pre className="p-4 text-sm overflow-x-auto">
-                    <code className="text-gray-100">{`{
-  "from": "PUBKEY1",
-  "results": [
-    { "to": "PUBKEY2", "distance": 1 },
-    { "to": "PUBKEY3", "distance": 2 },
-    { "to": "PUBKEY4", "distance": null }
-  ]
-}`}</code>
-                  </pre>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-2">
-                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{t("apiEndpoints.stats.title")}</code>
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{t("apiEndpoints.stats.description")}</p>
-              <div className="bg-gray-900 rounded-lg overflow-hidden">
-                <pre className="p-4 text-sm overflow-x-auto">
-                  <code className="text-gray-100">{`{
-  "total_pubkeys": 1250000,
-  "total_follows": 8500000,
-  "last_sync": "2024-01-15T10:30:00Z",
-  "cache_hit_rate": 0.85
-}`}</code>
-                </pre>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-2">
-                <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{t("apiEndpoints.health.title")}</code>
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">{t("apiEndpoints.health.description")}</p>
-              <div className="bg-gray-900 rounded-lg overflow-hidden">
-                <pre className="p-4 text-sm overflow-x-auto">
-                  <code className="text-gray-100">{`{ "status": "healthy", "uptime": 864000 }`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </Section>
 
       {/* Self-Hosting */}
-      <section className="py-20 bg-gray-100 dark:bg-gray-900">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-4">{t("selfHosting.title")}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-12">
-            {t("selfHosting.subtitle")}
-          </p>
-
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-4">{t("selfHosting.docker")}</h3>
+      <Section background="gray" padding="md">
+        <SectionHeader title={t("selfHosting.title")} description={t("selfHosting.subtitle")} />
+        <div className="space-y-6">
+          {SELF_HOSTING_BLOCKS.map((block) => (
+            <div key={block.key} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold mb-4">{t(`selfHosting.${block.key}`)}</h3>
               <div className="bg-gray-900 rounded-lg overflow-hidden">
                 <pre className="p-4 text-sm overflow-x-auto">
-                  <code className="text-gray-100">{`# Pull and run the image
-docker pull ghcr.io/mappingbitcoin/wot-oracle:v1.0.0
-
-docker run -d \\
-  -p 8080:8080 \\
-  -v wot-data:/app/data \\
-  ghcr.io/mappingbitcoin/wot-oracle:v1.0.0`}</code>
+                  <code className="text-gray-100">{block.code}</code>
                 </pre>
               </div>
             </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-4">{t("selfHosting.dockerCompose")}</h3>
-              <div className="bg-gray-900 rounded-lg overflow-hidden">
-                <pre className="p-4 text-sm overflow-x-auto">
-                  <code className="text-gray-100">{`git clone https://github.com/mappingbitcoin/wot-oracle.git
-cd wot-oracle
-docker-compose up -d`}</code>
-                </pre>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-4">{t("selfHosting.fromSource")}</h3>
-              <div className="bg-gray-900 rounded-lg overflow-hidden">
-                <pre className="p-4 text-sm overflow-x-auto">
-                  <code className="text-gray-100">{`git clone https://github.com/mappingbitcoin/wot-oracle.git
-cd wot-oracle
-cargo build --release
-./target/release/wot-oracle`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </Section>
 
       {/* Configuration */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-4">{t("configuration.title")}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-8">
-            {t("configuration.subtitle")}
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left p-4 font-semibold">{t("configuration.table.variable")}</th>
-                  <th className="text-left p-4 font-semibold">{t("configuration.table.default")}</th>
-                  <th className="text-left p-4 font-semibold">{t("configuration.table.description")}</th>
+      <Section padding="md">
+        <SectionHeader title={t("configuration.title")} description={t("configuration.subtitle")} />
+        <div className="overflow-x-auto">
+          <table className="w-full bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left p-4 font-semibold">{t("configuration.table.variable")}</th>
+                <th className="text-left p-4 font-semibold">{t("configuration.table.default")}</th>
+                <th className="text-left p-4 font-semibold">{t("configuration.table.description")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {CONFIG_ROWS.map((row) => (
+                <tr key={row.variable}>
+                  <td className="p-4">
+                    <code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">{row.variable}</code>
+                  </td>
+                  <td className="p-4 text-gray-600 dark:text-gray-400">{row.default}</td>
+                  <td className="p-4 text-gray-600 dark:text-gray-400">{t(`configuration.${row.key}.description`)}</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">RELAYS</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">damus, nos.lol, nostr.band</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.relays.description")}</td>
-                </tr>
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">HTTP_PORT</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">8080</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.httpPort.description")}</td>
-                </tr>
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">DB_PATH</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">wot.db</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.dbPath.description")}</td>
-                </tr>
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">RATE_LIMIT_PER_MINUTE</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">100</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.rateLimit.description")}</td>
-                </tr>
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">CACHE_SIZE</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">10000</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.cacheSize.description")}</td>
-                </tr>
-                <tr>
-                  <td className="p-4"><code className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-sm">CACHE_TTL_SECS</code></td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">300</td>
-                  <td className="p-4 text-gray-600 dark:text-gray-400">{t("configuration.cacheTtl.description")}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      </Section>
 
       {/* Architecture */}
-      <section className="py-20 bg-gray-100 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">{t("architecture.title")}</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-3">{t("architecture.graphStorage.title")}</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("architecture.graphStorage.description")}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-3">{t("architecture.pathfinding.title")}</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("architecture.pathfinding.description")}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-3">{t("architecture.caching.title")}</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("architecture.caching.description")}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-semibold mb-3">{t("architecture.rateLimiting.title")}</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                {t("architecture.rateLimiting.description")}
-              </p>
-            </div>
-          </div>
+      <Section background="gray" padding="md">
+        <SectionHeader title={t("architecture.title")} />
+        <div className="grid md:grid-cols-2 gap-6">
+          {ARCHITECTURE_CARDS.map((card, i) => (
+            <ScrollReveal key={card} animation="fade-up" delay={i * 100}>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 h-full">
+                <h3 className="text-lg font-semibold mb-3">{t(`architecture.${card}.title`)}</h3>
+                <p className="text-gray-600 dark:text-gray-400">{t(`architecture.${card}.description`)}</p>
+              </div>
+            </ScrollReveal>
+          ))}
         </div>
-      </section>
+      </Section>
 
       {/* Public Instance */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-4">{t("publicInstance.title")}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-6">
-            {t("publicInstance.subtitle")}
-          </p>
-          <div className="bg-gray-900 rounded-lg overflow-hidden max-w-xl mx-auto">
-            <pre className="p-4 text-center overflow-x-auto">
-              <code className="text-gray-100">https://wot-oracle.mappingbitcoin.com</code>
-            </pre>
-          </div>
-          <p className="text-center text-gray-500 dark:text-gray-400 mt-4 text-sm">
-            {t("publicInstance.rateLimit")}
-          </p>
+      <Section padding="md">
+        <SectionHeader title={t("publicInstance.title")} description={t("publicInstance.subtitle")} />
+        <div className="bg-gray-900 rounded-lg overflow-hidden max-w-xl mx-auto">
+          <pre className="p-4 text-center overflow-x-auto">
+            <code className="text-gray-100">https://wot-oracle.mappingbitcoin.com</code>
+          </pre>
         </div>
-      </section>
+        <p className="text-center text-gray-500 dark:text-gray-400 mt-4 text-sm">{t("publicInstance.rateLimit")}</p>
+      </Section>
 
       {/* CTA */}
       <section className="py-20 bg-primary text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold mb-4">{t("cta.title")}</h2>
-          <p className="text-lg text-white/80 mb-8">
-            {t("cta.subtitle")}
-          </p>
+          <p className="text-lg text-white/80 mb-8">{t("cta.subtitle")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <ExternalLinkButton href="https://github.com/mappingbitcoin/wot-oracle" variant="white">
-              {t("cta.viewSource")}
-            </ExternalLinkButton>
-            <LinkButton href="/download" variant="white-outline">
-              {t("cta.learnExtension")}
-            </LinkButton>
+            <ExternalLinkButton href="https://github.com/mappingbitcoin/wot-oracle" variant="white">{t("cta.viewSource")}</ExternalLinkButton>
+            <LinkButton href="/download" variant="white-outline">{t("cta.learnExtension")}</LinkButton>
           </div>
         </div>
       </section>

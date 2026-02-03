@@ -9,8 +9,8 @@ export const localeNames: Record<Locale, string> = {
   pt: 'Português',
 };
 
-export const localeFlags: Record<Locale, string> = {
-  en: '🇺🇸',
-  es: '🇪🇸',
-  pt: '🇧🇷',
+export const localeISO: Record<Locale, string> = {
+  en: 'EN',
+  es: 'ES',
+  pt: 'PT',
 };
