@@ -33,7 +33,8 @@
     "oracleGuide": "Guía de Oracle",
     "getTrustScore": "getTrustScore",
     "getDetails": "getDetails",
-    "getConfig": "getConfig"
+    "getConfig": "getConfig",
+    "onThisPage": "En esta página"
   },
   "overview": {
     "title": "Resumen",
