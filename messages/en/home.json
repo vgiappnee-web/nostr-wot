@@ -54,7 +54,8 @@
   "extension": {
     "badge": "Browser Extension",
     "title": "WoT Extension",
-    "description": "A powerful browser extension that exposes the {apiCode} API, enabling any web app to query social distance and trust scores directly.",
+    "descriptionStart": "A powerful browser extension that exposes the",
+    "descriptionEnd": "API, enabling any web app to query social distance and trust scores directly.",
     "features": {
       "clientSide": {
         "title": "Client-side trust queries",

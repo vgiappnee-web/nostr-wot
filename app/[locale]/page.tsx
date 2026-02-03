@@ -242,13 +242,11 @@ export default async function Home() {
                   {t("extension.title")}
                 </h2>
                 <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                  {t.rich("extension.description", {
-                    apiCode: () => (
-                      <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono">
-                        window.nostr.wot
-                      </code>
-                    ),
-                  })}
+                  {t("extension.descriptionStart")}{" "}
+                  <code className="bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-sm font-mono">
+                    window.nostr.wot
+                  </code>{" "}
+                  {t("extension.descriptionEnd")}
                 </p>
                 <ul className="space-y-4 mb-8">
                   <li className="flex items-start gap-3">

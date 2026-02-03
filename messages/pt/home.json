@@ -54,7 +54,8 @@
   "extension": {
     "badge": "Extensão de Navegador",
     "title": "Extensão WoT",
-    "description": "Uma poderosa extensão de navegador que expõe a API {apiCode}, permitindo que qualquer aplicação web consulte distância social e pontuações de confiança diretamente.",
+    "descriptionStart": "Uma poderosa extensão de navegador que expõe a API",
+    "descriptionEnd": ", permitindo que qualquer aplicação web consulte distância social e pontuações de confiança diretamente.",
     "features": {
       "clientSide": {
         "title": "Consultas de confiança no cliente",
