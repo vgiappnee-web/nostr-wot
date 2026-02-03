@@ -32,24 +32,6 @@ export default function Footer() {
               >
                 <GitHubIcon className="w-5 h-5" />
               </a>
-              <a
-                href="https://njump.me/npub1elta7cneng3w8p9y4dw633qzdjr4kyvaparuyuttyrx6e8xp7xnq32cume"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 dark:text-gray-500 hover:text-nostr transition-colors"
-                aria-label="Nostr"
-              >
-                <NostrIcon className="w-5 h-5" />
-              </a>
-              <a
-                href="https://x.com/AustinKels"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                aria-label="X (Twitter)"
-              >
-                <XTwitterIcon className="w-5 h-5" />
-              </a>
             </div>
           </div>
 
