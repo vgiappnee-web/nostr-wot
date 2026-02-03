@@ -48,11 +48,14 @@ if (window.nostr?.wot) {
   // Get exact distance (number of hops)
   const hops = await window.nostr.wot.getDistance(pubkey);
 
-  // Get full trust score with your custom weights
+  // Get full trust score (0-1 based on distance + bonuses)
   const score = await window.nostr.wot.getTrustScore(pubkey);
 
-  // Batch check multiple pubkeys at once
-  const results = await window.nostr.wot.batchCheck([pk1, pk2, pk3]);
+  // Get detailed trust info (paths, mutual, bridging nodes)
+  const details = await window.nostr.wot.getDetails(pubkey);
+
+  // Get current extension configuration
+  const config = await window.nostr.wot.getConfig();
 }`;
 
 // Data arrays

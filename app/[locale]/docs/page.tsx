@@ -35,6 +35,17 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
       { href: "#ext-getdistance", label: "getDistance" },
       { href: "#ext-isinmywot", label: "isInMyWoT" },
       { href: "#ext-getdistancebetween", label: "getDistanceBetween" },
+      { href: "#ext-gettrustscore", label: "getTrustScore" },
+      { href: "#ext-getdetails", label: "getDetails" },
+      { href: "#ext-getconfig", label: "getConfig" },
+    ],
+  },
+  {
+    key: "sdkIntegration",
+    links: [
+      { href: "#sdk-setup", labelKey: "sdkSetup" },
+      { href: "#sdk-methods", labelKey: "sdkMethods" },
+      { href: "#sdk-react", labelKey: "sdkReact" },
     ],
   },
   {
@@ -182,7 +193,7 @@ if (window.nostr?.wot) {
                   language="javascript"
                   code={`// Using fetch
 const response = await fetch(
-  \`https://wot-oracle.nostr-wot.com/distance?\` +
+  \`https://wot-oracle.mappingbitcoin.com/distance?\` +
   \`from=\${fromPubkey}&to=\${toPubkey}\`
 );
 const data = await response.json();
@@ -310,6 +321,289 @@ if (distance === 1) {
                 />
               </section>
 
+              <section id="ext-gettrustscore" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4"><InlineCode>{t("getTrustScore.title")}</InlineCode></h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("getTrustScore.description")}</p>
+                <h3 className="text-lg font-semibold mb-3">{t("getTrustScore.parameters")}</h3>
+                <ParamTable
+                  rows={[{ name: "targetPubkey", type: "string", description: "Hex or npub format pubkey" }]}
+                />
+                <h3 className="text-lg font-semibold mb-3">{t("getTrustScore.returns")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <InlineCode>Promise&lt;number | null&gt;</InlineCode> - {t("getTrustScore.returnsDescription")}{" "}
+                  <InlineCode>{t("getTrustScore.null")}</InlineCode> {t("getTrustScore.ifNotConnected")}
+                </p>
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 mb-6">
+                  <p className="font-mono text-sm mb-3">{t("getTrustScore.formula")}</p>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="font-semibold mb-2">{t("getTrustScore.distanceWeights.title")}</p>
+                      <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                        <li>{t("getTrustScore.distanceWeights.hop1")}</li>
+                        <li>{t("getTrustScore.distanceWeights.hop2")}</li>
+                        <li>{t("getTrustScore.distanceWeights.hop3")}</li>
+                        <li>{t("getTrustScore.distanceWeights.hop4plus")}</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-2">{t("getTrustScore.pathBonuses.title")}</p>
+                      <ul className="space-y-1 text-gray-600 dark:text-gray-400">
+                        <li>{t("getTrustScore.pathBonuses.hop2")}</li>
+                        <li>{t("getTrustScore.pathBonuses.hop3")}</li>
+                        <li>{t("getTrustScore.pathBonuses.hop4plus")}</li>
+                        <li>{t("getTrustScore.pathBonuses.max")}</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold mb-3">{t("getTrustScore.example")}</h3>
+                <CodeBlock
+                  language="javascript"
+                  code={`const score = await window.nostr.wot.getTrustScore(pubkey);
+
+if (score === null) {
+  console.log("Not connected");
+} else if (score >= 0.7) {
+  console.log("Highly trusted");
+} else if (score >= 0.3) {
+  console.log("Somewhat trusted");
+} else {
+  console.log("Low trust score");
+}`}
+                />
+              </section>
+
+              <section id="ext-getdetails" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4"><InlineCode>{t("getDetails.title")}</InlineCode></h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("getDetails.description")}</p>
+                <h3 className="text-lg font-semibold mb-3">{t("getDetails.parameters")}</h3>
+                <ParamTable
+                  rows={[{ name: "targetPubkey", type: "string", description: "Hex or npub format pubkey" }]}
+                />
+                <h3 className="text-lg font-semibold mb-3">{t("getDetails.returns")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <InlineCode>Promise&lt;TrustDetails | null&gt;</InlineCode> - {t("getDetails.returnsDescription")}
+                </p>
+                <h3 className="text-lg font-semibold mb-3">{t("getDetails.example")}</h3>
+                <CodeBlock
+                  language="javascript"
+                  code={`const details = await window.nostr.wot.getDetails(pubkey);
+
+if (details) {
+  console.log(\`Distance: \${details.distance} hops\`);
+  console.log(\`Trust score: \${details.score}\`);
+  console.log(\`Connection paths: \${details.paths}\`);
+  console.log(\`Mutual follow: \${details.mutual}\`);
+  console.log(\`Bridging nodes: \${details.bridgingNodes.join(", ")}\`);
+}`}
+                />
+              </section>
+
+              <section id="ext-getconfig" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4"><InlineCode>{t("getConfig.title")}</InlineCode></h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("getConfig.description")}</p>
+                <h3 className="text-lg font-semibold mb-3">{t("getConfig.returns")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  <InlineCode>Promise&lt;WoTConfig&gt;</InlineCode> - {t("getConfig.returnsDescription")}
+                </p>
+                <h3 className="text-lg font-semibold mb-3">{t("getConfig.example")}</h3>
+                <CodeBlock
+                  language="javascript"
+                  code={`const config = await window.nostr.wot.getConfig();
+
+console.log(\`Mode: \${config.mode}\`); // "remote", "local", or "hybrid"
+console.log(\`Relays: \${config.relays.join(", ")}\`);
+console.log(\`Cache TTL: \${config.cacheTTL}ms\`);
+console.log(\`Max hops: \${config.maxHops}\`);`}
+                />
+              </section>
+
+              {/* SDK Integration */}
+              <section id="sdk-setup" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4">{t("sdk.title")}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">{t("sdk.description")}</p>
+
+                <h3 className="text-lg font-semibold mb-3">{t("sdk.install.title")}</h3>
+                <TerminalBlock commands={["npm install nostr-wot-sdk"]} />
+
+                <h3 className="text-lg font-semibold mb-3 mt-8">{t("sdk.setup.extensionFirst")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("sdk.setup.extensionFirstDesc")}</p>
+                <CodeBlock
+                  language="javascript"
+                  className="mb-6"
+                  code={`import { WoT } from 'nostr-wot-sdk';
+
+const wot = new WoT({
+  useExtension: true,
+  fallback: {
+    oracle: 'https://wot-oracle.mappingbitcoin.com',
+    myPubkey: 'your-pubkey-hex...'
+  }
+});
+
+// Now use the same API as the extension
+const distance = await wot.getDistance(targetPubkey);
+const trusted = await wot.isInMyWoT(targetPubkey);
+const score = await wot.getTrustScore(targetPubkey);`}
+                />
+
+                <h3 className="text-lg font-semibold mb-3">{t("sdk.setup.oracleOnly")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("sdk.setup.oracleOnlyDesc")}</p>
+                <CodeBlock
+                  language="javascript"
+                  className="mb-6"
+                  code={`import { WoT } from 'nostr-wot-sdk';
+
+const wot = new WoT({
+  oracle: 'https://wot-oracle.mappingbitcoin.com',
+  myPubkey: 'your-pubkey-hex...'
+});`}
+                />
+
+                <h3 className="text-lg font-semibold mb-3">{t("sdk.setup.localMode")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("sdk.setup.localModeDesc")}</p>
+                <CodeBlock
+                  language="javascript"
+                  code={`import { LocalWoT } from 'nostr-wot-sdk/local';
+
+const wot = new LocalWoT({
+  myPubkey: 'your-pubkey-hex...',
+  relays: [
+    'wss://relay.damus.io',
+    'wss://nos.lol',
+    'wss://relay.nostr.band'
+  ]
+});
+
+// Sync the follow graph
+await wot.sync({ depth: 2 });
+
+// Then query as usual
+const distance = await wot.getDistance(targetPubkey);`}
+                />
+
+                <h3 className="text-lg font-semibold mb-3 mt-8">{t("sdk.options.title")}</h3>
+                <ParamTable
+                  hasDefault
+                  rows={[
+                    { name: "useExtension", type: "boolean", default: "false", description: t("sdk.options.useExtension") },
+                    { name: "oracle", type: "string", default: "https://wot-oracle.mappingbitcoin.com", description: t("sdk.options.oracle") },
+                    { name: "myPubkey", type: "string", default: "-", description: t("sdk.options.myPubkey") },
+                    { name: "maxHops", type: "number", default: "3", description: t("sdk.options.maxHops") },
+                    { name: "timeout", type: "number", default: "5000", description: t("sdk.options.timeout") },
+                    { name: "scoring", type: "object", default: "-", description: t("sdk.options.scoring") },
+                  ]}
+                />
+              </section>
+
+              <section id="sdk-methods" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4">{t("sdk.methods.title")}</h2>
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>getDistance(pubkey, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.getDistance")}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>isInMyWoT(pubkey, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.isInMyWoT")}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>getTrustScore(pubkey, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.getTrustScore")}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>getDistanceBetween(from, to, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.getDistanceBetween")}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>batchCheck(pubkeys, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.batchCheck")}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <p className="font-mono text-sm mb-2"><InlineCode>getDetails(pubkey, options?)</InlineCode></p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">{t("sdk.methods.getDetails")}</p>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-semibold mb-3 mt-8">{t("sdk.scoring.title")}</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("sdk.scoring.description")}</p>
+                <CodeBlock
+                  language="javascript"
+                  code={`const wot = new WoT({
+  oracle: 'https://wot-oracle.mappingbitcoin.com',
+  myPubkey: 'your-pubkey-hex...',
+  scoring: {
+    distanceWeights: {
+      1: 1.0,   // Direct connections
+      2: 0.5,   // Two hops away
+      3: 0.25,  // Three hops
+      4: 0.1    // Four+ hops
+    },
+    mutualBonus: 0.5,    // +50% for reciprocal follows
+    pathBonus: 0.1,      // +10% per additional route
+    maxPathBonus: 0.5    // Cap total path bonus at 50%
+  }
+});`}
+                />
+              </section>
+
+              <section id="sdk-react" className="mb-16">
+                <h2 className="text-2xl font-bold mb-4">{t("sdk.react.title")}</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">{t("sdk.react.description")}</p>
+                <CodeBlock
+                  language="tsx"
+                  className="mb-6"
+                  code={`import { useWoT, WoTProvider } from 'nostr-wot-sdk/react';
+
+// Wrap your app with the provider
+function App() {
+  return (
+    <WoTProvider options={{ useExtension: true }}>
+      <Profile />
+    </WoTProvider>
+  );
+}
+
+// Use the hook in components
+function Profile({ pubkey }) {
+  const { getDistance, getTrustScore, isLoading } = useWoT();
+  const [trust, setTrust] = useState(null);
+
+  useEffect(() => {
+    async function checkTrust() {
+      const score = await getTrustScore(pubkey);
+      setTrust(score);
+    }
+    checkTrust();
+  }, [pubkey]);
+
+  if (isLoading) return <span>Loading...</span>;
+
+  return (
+    <div>
+      Trust Score: {trust !== null ? trust.toFixed(2) : 'Not connected'}
+    </div>
+  );
+}`}
+                />
+
+                <h3 className="text-lg font-semibold mb-3">{t("sdk.errors.title")}</h3>
+                <ul className="list-disc pl-6 text-gray-600 dark:text-gray-400 space-y-2 mb-6">
+                  <li><InlineCode>NetworkError</InlineCode> - {t("sdk.errors.networkError")}</li>
+                  <li><InlineCode>NotFoundError</InlineCode> - {t("sdk.errors.notFoundError")}</li>
+                  <li><InlineCode>WoTError</InlineCode> - {t("sdk.errors.wotError")}</li>
+                </ul>
+
+                <div className="flex gap-4">
+                  <a href="https://www.npmjs.com/package/nostr-wot-sdk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+                    {t("sdk.links.npm")} →
+                  </a>
+                  <a href="https://github.com/mappingbitcoin/nostr-wot-sdk" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+                    {t("sdk.links.github")} →
+                  </a>
+                </div>
+              </section>
+
               <section id="oracle-distance" className="mb-16">
                 <h2 className="text-2xl font-bold mb-4"><InlineCode>{t("oracleDistance.title")}</InlineCode></h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">{t("oracleDistance.description")}</p>
@@ -340,7 +634,7 @@ if (distance === 1) {
                 <h3 className="text-lg font-semibold mb-3">Example</h3>
                 <TerminalBlock
                   commands={[
-                    'curl "https://wot-oracle.nostr-wot.com/distance?from=3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d&to=82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2"'
+                    'curl "https://wot-oracle.mappingbitcoin.com/distance?from=3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d&to=82341f882b6eabcd2ba7f1ef90aad961cf074af15b9ef44a09f9d2a8fbfbe6a2"'
                   ]}
                 />
               </section>
@@ -377,7 +671,7 @@ if (distance === 1) {
                 <h3 className="text-lg font-semibold mb-3">Example</h3>
                 <TerminalBlock
                   commands={[
-                    'curl -X POST "https://wot-oracle.nostr-wot.com/distance/batch" \\',
+                    'curl -X POST "https://wot-oracle.mappingbitcoin.com/distance/batch" \\',
                     '  -H "Content-Type: application/json" \\',
                     '  -d \'{"from": "3bf0c63f...", "targets": ["82341f88...", "a1b2c3d4..."]}\''
                   ]}

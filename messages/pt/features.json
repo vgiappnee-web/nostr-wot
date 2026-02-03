@@ -53,32 +53,45 @@
     "badge": "Pontuação de Confiança Personalizada",
     "title": "Nem todos os seguidos são iguais",
     "description": "Defina o que confiança significa para você",
+    "formula": "score = baseScore × distanceWeight × (1 + pathBonus)",
     "distance": {
-      "title": "Multiplicadores de Distância",
-      "description": "Atribua pesos com base em quão longe alguém está de você:",
+      "title": "Pesos de Distância",
+      "description": "A confiança diminui com a distância social:",
       "headers": {
         "hops": "Saltos",
-        "default": "Padrão",
-        "custom": "Personalizado"
+        "default": "Peso",
+        "custom": "Significado"
       },
       "rows": {
-        "direct": "1 (direto)",
-        "fof": "2 (amigo de amigo)",
-        "adjustable": "Ajustável"
+        "hop1": "1 salto",
+        "hop1Weight": "1.0",
+        "hop1Meaning": "Seguimento direto",
+        "hop2": "2 saltos",
+        "hop2Weight": "0.5",
+        "hop2Meaning": "Amigo de amigo",
+        "hop3": "3 saltos",
+        "hop3Weight": "0.25",
+        "hop3Meaning": "Rede estendida",
+        "hop4": "4+ saltos",
+        "hop4Weight": "0.1",
+        "hop4Meaning": "Conexão distante"
       }
     },
     "bonuses": {
-      "title": "Bônus de Relacionamento",
-      "description": "Aumente a confiança para sinais mais fortes:",
+      "title": "Bônus por Caminho",
+      "description": "Múltiplos caminhos de conexão aumentam a confiança:",
       "headers": {
-        "signal": "Sinal",
-        "multiplier": "Multiplicador"
+        "signal": "Distância",
+        "multiplier": "Bônus por caminho"
       },
       "rows": {
-        "mutual": "Seguimento mútuo",
-        "paths": "Múltiplos caminhos",
-        "recent": "Interação recente",
-        "longTerm": "Longo prazo (>1 ano)"
+        "hop2Paths": "2 saltos",
+        "hop2Bonus": "+15%",
+        "hop3Paths": "3 saltos",
+        "hop3Bonus": "+10%",
+        "hop4Paths": "4+ saltos",
+        "hop4Bonus": "+5%",
+        "maxBonus": "Bônus máximo: 50%"
       }
     },
     "thresholds": {

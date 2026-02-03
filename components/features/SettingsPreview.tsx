@@ -2,7 +2,7 @@
 
 import { ScrollReveal } from "@/components/ui";
 
-const RELAYS = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.nostr.band"];
+const RELAYS = ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.nostr.band", "wss://relay.mappingbitcoin.com"];
 
 const SYNC_DEPTHS = [
   { depth: "1 hop", nodes: "~500", storage: "~1 MB" },

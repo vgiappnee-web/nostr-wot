@@ -10,10 +10,10 @@ const DISTANCE_WEIGHTS = [
 ];
 
 const RELATIONSHIP_BONUSES = [
-  { signal: "Mutual follow", bonus: "+50%", desc: "They follow you back" },
-  { signal: "Multiple paths", bonus: "+10%", desc: "Per additional connection" },
-  { signal: "Recent interaction", bonus: "+20%", desc: "Activity in last 30 days" },
-  { signal: "Long-term", bonus: "+30%", desc: "Following for 1+ year" },
+  { signal: "2-hop paths", bonus: "+15%", desc: "Per additional connection path" },
+  { signal: "3-hop paths", bonus: "+10%", desc: "Per additional connection path" },
+  { signal: "4+ hop paths", bonus: "+5%", desc: "Per additional connection path" },
+  { signal: "Maximum bonus", bonus: "50%", desc: "Caps total path bonus" },
 ];
 
 export default function ScoringDetailsGrid() {
@@ -42,8 +42,8 @@ export default function ScoringDetailsGrid() {
 
       <ScrollReveal animation="fade-up" delay={300}>
         <div className="bg-white dark:bg-gray-800/50 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-700/50 h-full">
-          <h3 className="text-lg font-bold mb-2">Relationship Bonuses</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Stronger signals boost trust scores</p>
+          <h3 className="text-lg font-bold mb-2">Path Bonuses</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Multiple connection paths increase trust</p>
           <div className="space-y-4">
             {RELATIONSHIP_BONUSES.map((item) => (
               <div key={item.signal} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/30">

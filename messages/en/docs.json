@@ -13,10 +13,17 @@
     "quickStart": "Quick Start",
     "extensionApi": "Extension API",
     "setup": "Setup",
+    "sdkIntegration": "SDK Integration",
+    "sdkSetup": "SDK Setup",
+    "sdkMethods": "SDK Methods",
+    "sdkReact": "React Integration",
     "oracleApi": "Oracle API",
     "resources": "Resources",
     "extensionGuide": "Extension Guide",
-    "oracleGuide": "Oracle Guide"
+    "oracleGuide": "Oracle Guide",
+    "getTrustScore": "getTrustScore",
+    "getDetails": "getDetails",
+    "getConfig": "getConfig"
   },
   "overview": {
     "title": "Overview",
@@ -138,6 +145,118 @@
     "title": "GET /health",
     "description": "Health check endpoint for monitoring and load balancers.",
     "response": "Response"
+  },
+  "getTrustScore": {
+    "title": "getTrustScore(targetPubkey)",
+    "description": "Returns a normalized trust score (0-1) based on distance and relationship bonuses.",
+    "parameters": "Parameters",
+    "paramName": "Name",
+    "paramType": "Type",
+    "paramDescription": "Description",
+    "targetPubkey": "Hex or npub format pubkey",
+    "returns": "Returns",
+    "returnsDescription": "Trust score between 0 and 1, or",
+    "null": "null",
+    "ifNotConnected": "if not connected.",
+    "example": "Example",
+    "formula": "Formula: score = baseScore × distanceWeight × (1 + pathBonus)",
+    "distanceWeights": {
+      "title": "Distance Weights",
+      "hop1": "1 hop = 1.0",
+      "hop2": "2 hops = 0.5",
+      "hop3": "3 hops = 0.25",
+      "hop4plus": "4+ hops = 0.1"
+    },
+    "pathBonuses": {
+      "title": "Path Bonuses (per additional path)",
+      "hop2": "2 hops = +15%",
+      "hop3": "3 hops = +10%",
+      "hop4plus": "4+ hops = +5%",
+      "max": "Maximum bonus: 50%"
+    }
+  },
+  "getDetails": {
+    "title": "getDetails(targetPubkey)",
+    "description": "Returns detailed trust information including distance, score, paths, and relationship data.",
+    "parameters": "Parameters",
+    "paramName": "Name",
+    "paramType": "Type",
+    "paramDescription": "Description",
+    "targetPubkey": "Hex or npub format pubkey",
+    "returns": "Returns",
+    "returnsDescription": "Object with distance, score, paths count, mutual follow status, and bridging nodes.",
+    "example": "Example"
+  },
+  "getConfig": {
+    "title": "getConfig()",
+    "description": "Returns the current extension configuration including mode, relays, and scoring weights.",
+    "returns": "Returns",
+    "returnsDescription": "Configuration object with mode, relays, scoring weights, and cache settings.",
+    "example": "Example"
+  },
+  "sdk": {
+    "title": "SDK Integration",
+    "description": "The nostr-wot-sdk provides a JavaScript/TypeScript SDK for querying Nostr Web of Trust directly in your application.",
+    "install": {
+      "title": "Installation",
+      "npm": "npm install nostr-wot-sdk",
+      "yarn": "yarn add nostr-wot-sdk",
+      "pnpm": "pnpm add nostr-wot-sdk"
+    },
+    "setup": {
+      "title": "Setup",
+      "extensionFirst": "Extension-First (Recommended)",
+      "extensionFirstDesc": "Automatically uses the browser extension when available, with oracle fallback:",
+      "oracleOnly": "Oracle Only",
+      "oracleOnlyDesc": "Use the oracle directly without extension detection:",
+      "localMode": "Local Mode (Server-Side)",
+      "localModeDesc": "Build and sync your own follow graph for Node.js environments:"
+    },
+    "options": {
+      "title": "Constructor Options",
+      "useExtension": "Leverage browser extension when present",
+      "oracle": "Fallback API endpoint",
+      "myPubkey": "Your Nostr public key",
+      "maxHops": "Default search depth",
+      "timeout": "Request timeout in milliseconds",
+      "scoring": "Custom trust weighting parameters"
+    },
+    "methods": {
+      "title": "SDK Methods",
+      "getDistance": "Returns shortest path length to target (number or null)",
+      "isInMyWoT": "Boolean check if pubkey is within specified hops",
+      "getTrustScore": "Computes normalized trust metric (0-1 range)",
+      "getDistanceBetween": "Measures path length between any two pubkeys",
+      "batchCheck": "Efficiently evaluates multiple targets simultaneously",
+      "getDetails": "Retrieves comprehensive metrics including paths and mutual connections",
+      "getMyPubkey": "Retrieves active pubkey from extension or config",
+      "isUsingExtension": "Confirms whether extension is actively engaged",
+      "getExtensionConfig": "Accesses extension-provided configuration"
+    },
+    "scoring": {
+      "title": "Custom Scoring",
+      "description": "Customize how trust metrics are calculated:",
+      "distanceWeights": "Distance weights (1-4+ hops)",
+      "mutualBonus": "+50% for reciprocal follows",
+      "pathBonus": "+10% per additional route",
+      "maxPathBonus": "Cap total path bonus at 50%"
+    },
+    "react": {
+      "title": "React Integration",
+      "description": "Use the SDK with React hooks and context:",
+      "provider": "Wrap your app with WoTProvider",
+      "hook": "Use the useWoT hook in components"
+    },
+    "errors": {
+      "title": "Error Handling",
+      "networkError": "NetworkError - Oracle service unreachable",
+      "notFoundError": "NotFoundError - Pubkey absent from graph",
+      "wotError": "WoTError - General framework errors"
+    },
+    "links": {
+      "npm": "View on npm",
+      "github": "View on GitHub"
+    }
   },
   "rateLimits": {
     "title": "Rate Limits",

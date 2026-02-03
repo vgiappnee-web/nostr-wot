@@ -13,10 +13,17 @@
     "quickStart": "Início Rápido",
     "extensionApi": "API da Extensão",
     "setup": "Configuração",
+    "sdkIntegration": "Integração SDK",
+    "sdkSetup": "Configuração SDK",
+    "sdkMethods": "Métodos SDK",
+    "sdkReact": "Integração React",
     "oracleApi": "API Oracle",
     "resources": "Recursos",
     "extensionGuide": "Guia da Extensão",
-    "oracleGuide": "Guia do Oracle"
+    "oracleGuide": "Guia do Oracle",
+    "getTrustScore": "getTrustScore",
+    "getDetails": "getDetails",
+    "getConfig": "getConfig"
   },
   "overview": {
     "title": "Visão Geral",
@@ -138,6 +145,118 @@
     "title": "GET /health",
     "description": "Endpoint de verificação de saúde para monitoramento e balanceadores de carga.",
     "response": "Resposta"
+  },
+  "getTrustScore": {
+    "title": "getTrustScore(targetPubkey)",
+    "description": "Retorna uma pontuação de confiança normalizada (0-1) baseada em distância e bônus de relacionamento.",
+    "parameters": "Parâmetros",
+    "paramName": "Nome",
+    "paramType": "Tipo",
+    "paramDescription": "Descrição",
+    "targetPubkey": "Pubkey em formato hex ou npub",
+    "returns": "Retorna",
+    "returnsDescription": "Pontuação de confiança entre 0 e 1, ou",
+    "null": "null",
+    "ifNotConnected": "se não conectado.",
+    "example": "Exemplo",
+    "formula": "Fórmula: score = baseScore × distanceWeight × (1 + pathBonus)",
+    "distanceWeights": {
+      "title": "Pesos de Distância",
+      "hop1": "1 salto = 1.0",
+      "hop2": "2 saltos = 0.5",
+      "hop3": "3 saltos = 0.25",
+      "hop4plus": "4+ saltos = 0.1"
+    },
+    "pathBonuses": {
+      "title": "Bônus por Caminho (por caminho adicional)",
+      "hop2": "2 saltos = +15%",
+      "hop3": "3 saltos = +10%",
+      "hop4plus": "4+ saltos = +5%",
+      "max": "Bônus máximo: 50%"
+    }
+  },
+  "getDetails": {
+    "title": "getDetails(targetPubkey)",
+    "description": "Retorna informações detalhadas de confiança incluindo distância, pontuação, caminhos e dados de relacionamento.",
+    "parameters": "Parâmetros",
+    "paramName": "Nome",
+    "paramType": "Tipo",
+    "paramDescription": "Descrição",
+    "targetPubkey": "Pubkey em formato hex ou npub",
+    "returns": "Retorna",
+    "returnsDescription": "Objeto com distância, pontuação, quantidade de caminhos, status de seguimento mútuo e nós de ponte.",
+    "example": "Exemplo"
+  },
+  "getConfig": {
+    "title": "getConfig()",
+    "description": "Retorna a configuração atual da extensão incluindo modo, relays e pesos de pontuação.",
+    "returns": "Retorna",
+    "returnsDescription": "Objeto de configuração com modo, relays, pesos de pontuação e configurações de cache.",
+    "example": "Exemplo"
+  },
+  "sdk": {
+    "title": "Integração SDK",
+    "description": "O nostr-wot-sdk fornece um SDK JavaScript/TypeScript para consultar Nostr Web of Trust diretamente em sua aplicação.",
+    "install": {
+      "title": "Instalação",
+      "npm": "npm install nostr-wot-sdk",
+      "yarn": "yarn add nostr-wot-sdk",
+      "pnpm": "pnpm add nostr-wot-sdk"
+    },
+    "setup": {
+      "title": "Configuração",
+      "extensionFirst": "Extension-First (Recomendado)",
+      "extensionFirstDesc": "Usa automaticamente a extensão do navegador quando disponível, com oracle como fallback:",
+      "oracleOnly": "Apenas Oracle",
+      "oracleOnlyDesc": "Use o oracle diretamente sem detecção de extensão:",
+      "localMode": "Modo Local (Lado do Servidor)",
+      "localModeDesc": "Construa e sincronize seu próprio grafo de follows para ambientes Node.js:"
+    },
+    "options": {
+      "title": "Opções do Construtor",
+      "useExtension": "Usar extensão do navegador quando presente",
+      "oracle": "Endpoint API de fallback",
+      "myPubkey": "Sua chave pública Nostr",
+      "maxHops": "Profundidade de busca padrão",
+      "timeout": "Tempo limite da requisição em milissegundos",
+      "scoring": "Parâmetros personalizados de ponderação de confiança"
+    },
+    "methods": {
+      "title": "Métodos do SDK",
+      "getDistance": "Retorna o comprimento do caminho mais curto até o alvo (número ou null)",
+      "isInMyWoT": "Verificação booleana se a pubkey está dentro dos saltos especificados",
+      "getTrustScore": "Calcula métrica de confiança normalizada (intervalo 0-1)",
+      "getDistanceBetween": "Mede o comprimento do caminho entre duas pubkeys",
+      "batchCheck": "Avalia eficientemente múltiplos alvos simultaneamente",
+      "getDetails": "Recupera métricas abrangentes incluindo caminhos e conexões mútuas",
+      "getMyPubkey": "Recupera pubkey ativa da extensão ou config",
+      "isUsingExtension": "Confirma se a extensão está ativamente em uso",
+      "getExtensionConfig": "Acessa configuração fornecida pela extensão"
+    },
+    "scoring": {
+      "title": "Pontuação Personalizada",
+      "description": "Personalize como as métricas de confiança são calculadas:",
+      "distanceWeights": "Pesos de distância (1-4+ saltos)",
+      "mutualBonus": "+50% para seguimentos recíprocos",
+      "pathBonus": "+10% por rota adicional",
+      "maxPathBonus": "Limite de bônus total de caminho em 50%"
+    },
+    "react": {
+      "title": "Integração com React",
+      "description": "Use o SDK com hooks e contexto do React:",
+      "provider": "Envolva sua app com WoTProvider",
+      "hook": "Use o hook useWoT em componentes"
+    },
+    "errors": {
+      "title": "Tratamento de Erros",
+      "networkError": "NetworkError - Serviço oracle inacessível",
+      "notFoundError": "NotFoundError - Pubkey ausente do grafo",
+      "wotError": "WoTError - Erros gerais do framework"
+    },
+    "links": {
+      "npm": "Ver no npm",
+      "github": "Ver no GitHub"
+    }
   },
   "rateLimits": {
     "title": "Limites de Taxa",

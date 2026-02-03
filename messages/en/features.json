@@ -53,32 +53,45 @@
     "badge": "Custom Trust Scoring",
     "title": "Not all follows are equal",
     "description": "Define what trust means to you",
+    "formula": "score = baseScore × distanceWeight × (1 + pathBonus)",
     "distance": {
-      "title": "Distance Multipliers",
-      "description": "Assign weights based on how far someone is from you:",
+      "title": "Distance Weights",
+      "description": "Trust decreases with social distance:",
       "headers": {
         "hops": "Hops",
-        "default": "Default",
-        "custom": "Custom"
+        "default": "Weight",
+        "custom": "Meaning"
       },
       "rows": {
-        "direct": "1 (direct)",
-        "fof": "2 (FoF)",
-        "adjustable": "Adjustable"
+        "hop1": "1 hop",
+        "hop1Weight": "1.0",
+        "hop1Meaning": "Direct follow",
+        "hop2": "2 hops",
+        "hop2Weight": "0.5",
+        "hop2Meaning": "Friend of friend",
+        "hop3": "3 hops",
+        "hop3Weight": "0.25",
+        "hop3Meaning": "Extended network",
+        "hop4": "4+ hops",
+        "hop4Weight": "0.1",
+        "hop4Meaning": "Distant connection"
       }
     },
     "bonuses": {
-      "title": "Relationship Bonuses",
-      "description": "Boost trust for stronger signals:",
+      "title": "Path Bonuses",
+      "description": "Multiple connection paths increase trust:",
       "headers": {
-        "signal": "Signal",
-        "multiplier": "Multiplier"
+        "signal": "Distance",
+        "multiplier": "Bonus per path"
       },
       "rows": {
-        "mutual": "Mutual follow",
-        "paths": "Multiple paths",
-        "recent": "Recent interaction",
-        "longTerm": "Long-term (>1yr)"
+        "hop2Paths": "2 hops",
+        "hop2Bonus": "+15%",
+        "hop3Paths": "3 hops",
+        "hop3Bonus": "+10%",
+        "hop4Paths": "4+ hops",
+        "hop4Bonus": "+5%",
+        "maxBonus": "Max bonus: 50%"
       }
     },
     "thresholds": {
