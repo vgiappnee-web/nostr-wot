@@ -34,16 +34,16 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              // Scripts: self, inline for Next.js, Google reCAPTCHA
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/",
+              // Scripts: self, inline for Next.js, Google reCAPTCHA, Google Analytics
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://www.googletagmanager.com",
               // Styles: self, inline for styled-jsx and Tailwind
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Images: self, data URIs, HTTPS sources
               "img-src 'self' data: https: blob:",
               // Fonts: self, Google Fonts
               "font-src 'self' https://fonts.gstatic.com",
-              // Connect: self, WebSocket relays, Google reCAPTCHA, analytics
-              "connect-src 'self' wss: https://www.google.com/recaptcha/ https://*.google-analytics.com https://*.analytics.google.com",
+              // Connect: self, WebSocket relays, Google reCAPTCHA, analytics, WoT Oracle
+              "connect-src 'self' wss: https://www.google.com/recaptcha/ https://*.google-analytics.com https://*.analytics.google.com https://wot-oracle.mappingbitcoin.com",
               // Frames: Google reCAPTCHA
               "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/",
               // Base URI restriction

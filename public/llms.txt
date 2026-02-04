@@ -1,0 +1,90 @@
+# Nostr Web of Trust
+
+> Open infrastructure for trust-based filtering on Nostr. Measures social distance (hops) in the follow graph to enable spam filtering, trust scoring, and content filtering without centralized authorities.
+
+Nostr Web of Trust (WoT) solves the spam and identity verification problem on Nostr by calculating how many hops separate users in the social follow graph. Your pubkey is the center: people you follow = 1 hop, people they follow = 2 hops, beyond 3 hops = likely noise.
+
+## Core Concepts
+
+- **Trust Score**: Calculated based on social distance and number of paths connecting two users
+- **Distance**: Number of hops between two pubkeys in the follow graph
+- **Web of Trust**: The network of follows that determines trust relationships
+
+## Trust Score Formula
+
+```
+score = base × distance_weight × (1 + path_bonus)
+```
+
+Distance weights: 1 hop = 100%, 2 hops = 60%, 3 hops = 30%, 4+ hops = 10%
+
+## Documentation
+
+- [Getting Started](https://nostr-wot.com/docs/getting-started): Installation and quick start guide
+- [Browser Extension Docs](https://nostr-wot.com/docs/extension): NIP-07 compatible extension with `window.nostr.wot` API
+- [JavaScript SDK Docs](https://nostr-wot.com/docs/sdk): TypeScript library with React hooks for client-side integration
+- [WoT Oracle Docs](https://nostr-wot.com/docs/oracle): High-performance Rust backend REST API
+
+## API Reference
+
+### Browser Extension API
+
+```javascript
+// Get distance in hops
+await window.nostr.wot.getDistance(targetPubkey)
+
+// Get trust score (0-1)
+await window.nostr.wot.getTrustScore(targetPubkey)
+
+// Check if user is in Web of Trust
+await window.nostr.wot.isInWoT(targetPubkey)
+```
+
+### JavaScript SDK
+
+```javascript
+import { NostrWoT } from 'nostr-wot-sdk'
+
+const wot = new NostrWoT({ userPubkey: 'your-pubkey' })
+await wot.getTrustScore(targetPubkey)
+await wot.getDistance(targetPubkey)
+```
+
+### Oracle REST API
+
+```
+GET /distance?from={pubkey}&to={pubkey}
+POST /distance/batch
+GET /stats
+```
+
+Public instance: `https://wot-oracle.mappingbitcoin.com`
+
+## Projects
+
+- [Browser Extension](https://github.com/nostr-wot/nostr-wot-extension): Chrome, Brave, Edge, Opera support
+- [JavaScript SDK](https://github.com/nostr-wot/nostr-wot-sdk): npm package `nostr-wot-sdk`
+- [WoT Oracle](https://github.com/nostr-wot/nostr-wot-oracle): Self-hostable Rust backend
+
+## Use Cases
+
+- Spam filtering without centralized blocklists
+- Trust scores for marketplaces and reviews
+- Tiered notifications by social proximity
+- Client-side content filtering
+- Identity verification through social proof
+
+## Pages
+
+- [Home](https://nostr-wot.com): Project overview and introduction
+- [Features](https://nostr-wot.com/features): Detailed feature descriptions
+- [Playground](https://nostr-wot.com/playground): Interactive graph visualization and API testing
+- [Download](https://nostr-wot.com/download): Browser extension downloads
+- [About](https://nostr-wot.com/about): Project background and team
+
+## Optional
+
+- [Privacy Policy](https://nostr-wot.com/privacy)
+- [Terms of Service](https://nostr-wot.com/terms)
+- [Media Kit](https://nostr-wot.com/media-kit)
+- [Contact](https://nostr-wot.com/contact)

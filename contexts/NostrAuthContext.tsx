@@ -34,6 +34,7 @@ interface NostrAuthContextType {
 const NostrAuthContext = createContext<NostrAuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "nostr_auth";
+const PROFILE_STORAGE_KEY = "nostr_profile";
 
 // Helper to decode bech32 (nsec/npub) to hex
 function bech32ToHex(bech32: string): { type: "nsec" | "npub"; hex: string } | null {
@@ -154,13 +155,18 @@ export function NostrAuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Load user from storage on mount
+    // Load user and profile from storage on mount
     useEffect(() => {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
+            const storedUser = localStorage.getItem(STORAGE_KEY);
+            if (storedUser) {
+                const parsed = JSON.parse(storedUser);
                 setUser(parsed);
+            }
+            const storedProfile = localStorage.getItem(PROFILE_STORAGE_KEY);
+            if (storedProfile) {
+                const parsedProfile = JSON.parse(storedProfile);
+                setProfile(parsedProfile);
             }
         } catch (e) {
             console.error("Failed to load auth state:", e);
@@ -178,10 +184,24 @@ export function NostrAuthProvider({ children }: { children: ReactNode }) {
         }
     }, [user]);
 
-    // Fetch user profile when user changes
+    // Persist profile to storage
+    useEffect(() => {
+        if (profile) {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+        } else {
+            localStorage.removeItem(PROFILE_STORAGE_KEY);
+        }
+    }, [profile]);
+
+    // Fetch user profile when user changes (refresh cached profile in background)
     useEffect(() => {
         if (user?.pubkey) {
-            fetchNostrProfile(user.pubkey).then(setProfile);
+            // Fetch fresh profile in background (cached profile already loaded above)
+            fetchNostrProfile(user.pubkey).then((freshProfile) => {
+                if (freshProfile) {
+                    setProfile(freshProfile);
+                }
+            });
         } else {
             setProfile(null);
         }
@@ -329,6 +349,7 @@ export function NostrAuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem("nostr_bunker");
         sessionStorage.removeItem("nostr_connect_session");
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(PROFILE_STORAGE_KEY);
     }, []);
 
     const clearError = useCallback(() => {

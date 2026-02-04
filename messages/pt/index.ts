@@ -10,6 +10,7 @@ import privacy from './privacy.json';
 import terms from './terms.json';
 import docs from './docs.json';
 import playground from './playground.json';
+import profile from './profile.json';
 
 const messages = {
   common,
@@ -24,6 +25,7 @@ const messages = {
   terms,
   docs,
   playground,
+  profile,
 };
 
 export default messages;

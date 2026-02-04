@@ -1,15 +1,25 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Button, Badge } from "@/components/ui";
 import { useNostrAuth } from "@/contexts/NostrAuthContext";
-import { LoginModal } from "@/components/auth";
+import { LoginModal, ConnectModal } from "@/components/auth";
+import { GraphPlayground } from "@/components/playground";
 
 export default function PlaygroundContent() {
   const t = useTranslations("playground");
   const { user, logout } = useNostrAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [hasSeenConnectModal, setHasSeenConnectModal] = useState(false);
+
+  // Show connect modal automatically if user is not logged in
+  useEffect(() => {
+    if (!user?.pubkey && !hasSeenConnectModal) {
+      setIsConnectModalOpen(true);
+    }
+  }, [user?.pubkey, hasSeenConnectModal]);
 
   const handleOpenModal = useCallback(() => {
     setIsLoginModalOpen(true);
@@ -17,6 +27,17 @@ export default function PlaygroundContent() {
 
   const handleCloseModal = useCallback(() => {
     setIsLoginModalOpen(false);
+  }, []);
+
+  const handleCloseConnectModal = useCallback(() => {
+    setIsConnectModalOpen(false);
+    setHasSeenConnectModal(true);
+  }, []);
+
+  const handleConnectFromModal = useCallback(() => {
+    setIsConnectModalOpen(false);
+    setHasSeenConnectModal(true);
+    setIsLoginModalOpen(true);
   }, []);
 
   const formatPubkey = (pk: string) => {
@@ -41,15 +62,55 @@ export default function PlaygroundContent() {
   };
 
   return (
-    <main>
-      {/* Hero Section */}
-      <HeroSection
-        user={user}
-        onLogin={handleOpenModal}
-        onLogout={logout}
-        formatPubkey={formatPubkey}
-        getMethodLabel={getMethodLabel}
-        t={t}
+    <main className="min-h-screen">
+      {/* Show graph when logged in, otherwise show hero */}
+      {user?.pubkey ? (
+        <div className="py-4 px-4 sm:px-6 lg:px-8">
+          {/* Logged in header */}
+          <div className="max-w-7xl mx-auto mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Badge>{t("hero.badge")}</Badge>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {t("hero.title")}
+                </h1>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
+                  <span className="font-mono">{formatPubkey(user.pubkey)}</span>
+                  <span className="text-gray-400">
+                    via {getMethodLabel(user.method)}
+                  </span>
+                </div>
+                <Button variant="secondary" size="sm" onClick={logout}>
+                  {t("hero.logout")}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Graph visualization */}
+          <div className="max-w-7xl mx-auto">
+            <GraphPlayground />
+          </div>
+        </div>
+      ) : (
+        <HeroSection
+          user={user}
+          onLogin={handleOpenModal}
+          onLogout={logout}
+          formatPubkey={formatPubkey}
+          getMethodLabel={getMethodLabel}
+          t={t}
+        />
+      )}
+
+      {/* Connect Modal - shown automatically for non-logged in users */}
+      <ConnectModal
+        isOpen={isConnectModalOpen}
+        onClose={handleCloseConnectModal}
+        onConnect={handleConnectFromModal}
       />
 
       {/* Login Modal */}

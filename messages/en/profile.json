@@ -1,0 +1,18 @@
+{
+  "title": "Profile",
+  "description": "View Nostr user profile and their social connections on the Web of Trust network.",
+  "searchPlaceholder": "Search by npub or hex pubkey...",
+  "search": "Search",
+  "following": "Following",
+  "followers": "Followers",
+  "recentNotes": "Recent Notes",
+  "noNotes": "No notes found",
+  "noFollowing": "Not following anyone",
+  "loadMore": "Load More",
+  "loading": "Loading...",
+  "error": "Error loading profile",
+  "goBack": "Go Back",
+  "searchFollowing": "Search following...",
+  "noResults": "No results found",
+  "more": "more"
+}
