@@ -7,6 +7,7 @@ import React, {
   useCallback,
   ReactNode,
   useMemo,
+  useEffect,
 } from "react";
 import {
   GraphData,
@@ -22,6 +23,10 @@ import {
 } from "@/lib/graph/types";
 import { filterGraphData, calculateStats } from "@/lib/graph/transformers";
 import { calculateTrustScore } from "@/lib/graph/colors";
+import {
+  getCachedProfile,
+  cacheProfiles as cacheProfilesToStorage,
+} from "@/lib/cache/profileCache";
 
 // State
 interface GraphState {
@@ -111,9 +116,15 @@ function graphReducer(state: GraphState, action: GraphAction): GraphState {
 
     case "ADD_PROFILES": {
       const newProfiles = new Map(state.profiles);
+      const profilesToCache: NodeProfile[] = [];
       action.payload.forEach((profile, key) => {
         newProfiles.set(key, profile);
+        profilesToCache.push(profile);
       });
+      // Also cache to localStorage
+      if (profilesToCache.length > 0) {
+        cacheProfilesToStorage(profilesToCache);
+      }
       return { ...state, profiles: newProfiles };
     }
 
@@ -296,7 +307,14 @@ export function GraphProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getProfile = useCallback(
-    (pubkey: string) => state.profiles.get(pubkey),
+    (pubkey: string) => {
+      // Check memory cache first
+      const memProfile = state.profiles.get(pubkey);
+      if (memProfile) return memProfile;
+
+      // Fall back to localStorage cache
+      return getCachedProfile(pubkey) ?? undefined;
+    },
     [state.profiles]
   );
 

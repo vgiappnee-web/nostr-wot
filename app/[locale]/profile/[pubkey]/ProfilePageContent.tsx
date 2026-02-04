@@ -1,13 +1,46 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useWoTContext } from "nostr-wot-sdk/react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { NodeProfile } from "@/lib/graph/types";
 import { formatPubkey } from "@/lib/graph/transformers";
 import { Button } from "@/components/ui";
 import NoteCard from "@/components/playground/profile/NoteCard";
+import {
+  TrustData,
+  getCachedTrust,
+  getCachedTrustBatch,
+  cacheTrust,
+  cacheTrustBatch,
+  getPubkeysNeedingTrust,
+  WoTScoringConfig,
+} from "@/lib/cache/profileCache";
+import { calculateTrustScore } from "@/lib/graph/colors";
+
+interface TrustInfo extends TrustData {
+  isLoading?: boolean;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseConfigToScoringConfig(sdkConfig: any): WoTScoringConfig | null {
+  if (!sdkConfig) return null;
+
+  try {
+    return {
+      distanceWeights: sdkConfig.distanceWeights ?? {
+        0: 1.0, 1: 1.0, 2: 0.5, 3: 0.25, 4: 0.1
+      },
+      mutualBonus: sdkConfig.mutualBonus ?? 0.5,
+      pathBonus: sdkConfig.pathBonus ?? 0.1,
+      maxPathBonus: sdkConfig.maxPathBonus ?? 0.5,
+    };
+  } catch {
+    return null;
+  }
+}
 
 interface ProfilePageContentProps {
   pubkey: string;
@@ -16,6 +49,8 @@ interface ProfilePageContentProps {
 export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) {
   const t = useTranslations("profile");
   const router = useRouter();
+  const { wot, isReady: isWotReady } = useWoTContext();
+
   const {
     profile,
     follows,
@@ -31,6 +66,255 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
 
   const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Trust data from WoT extension
+  const [profileTrust, setProfileTrust] = useState<TrustInfo | null>(null);
+  const [isLoadingTrust, setIsLoadingTrust] = useState(false);
+  const [followersTrust, setFollowersTrust] = useState<Map<string, TrustInfo>>(new Map());
+  const [scoringConfig, setScoringConfig] = useState<WoTScoringConfig | null>(null);
+
+  const wotRef = useRef(wot);
+  wotRef.current = wot;
+
+  // Get scoring config from SDK when ready
+  useEffect(() => {
+    if (!wotRef.current || !isWotReady) return;
+
+    try {
+      // getScoringConfig is a sync method on the WoT instance
+      const config = wotRef.current.getScoringConfig();
+      const parsed = parseConfigToScoringConfig(config);
+      if (parsed) {
+        setScoringConfig(parsed);
+      }
+    } catch (err) {
+      console.warn("[ProfilePageContent] Failed to get scoring config:", err);
+    }
+  }, [isWotReady]);
+
+  // Fetch trust data for profile when WoT is ready
+  useEffect(() => {
+    const fetchProfileTrust = async () => {
+      if (!wotRef.current || !pubkey) return;
+
+      // Check cache first
+      const cached = getCachedTrust(pubkey);
+      if (cached) {
+        setProfileTrust(cached);
+
+        // If paths is null, try to fetch it and update cache
+        if (cached.paths === null && cached.distance !== null) {
+          try {
+            const details = await wotRef.current.getDetails(pubkey);
+            if (details?.paths !== undefined) {
+              const updatedTrust: TrustData = {
+                ...cached,
+                paths: details.paths,
+              };
+              cacheTrust(pubkey, updatedTrust);
+              setProfileTrust(updatedTrust);
+            }
+          } catch {
+            // Ignore - keep using cached data without paths
+          }
+        }
+        return;
+      }
+
+      setIsLoadingTrust(true);
+      try {
+        // Use batchCheck for distance
+        const results = await wotRef.current.batchCheck([pubkey]);
+        const result = results.get(pubkey);
+
+        if (result) {
+          const distance = result.distance ?? null;
+
+          // Use getDetails to get paths count
+          let paths: number | null = null;
+          try {
+            const details = await wotRef.current.getDetails(pubkey);
+            paths = details?.paths ?? null;
+          } catch {
+            // getDetails might fail, continue without paths
+          }
+
+          // Only cache distance and paths - score calculated on the fly
+          const trustData: TrustData = {
+            distance,
+            paths,
+          };
+
+          // Cache the result
+          cacheTrust(pubkey, trustData);
+          setProfileTrust(trustData);
+        }
+      } catch (err) {
+        console.warn("[ProfilePageContent] Failed to get trust:", err);
+      } finally {
+        setIsLoadingTrust(false);
+      }
+    };
+
+    if (isWotReady && pubkey) {
+      fetchProfileTrust();
+    }
+  }, [isWotReady, pubkey]);
+
+  // Helper to recheck paths for cached entries that have paths: null
+  const recheckPaths = useCallback(async (pubkeys: string[]) => {
+    if (!wotRef.current || pubkeys.length === 0) return;
+
+    for (const pk of pubkeys) {
+      try {
+        const details = await wotRef.current.getDetails(pk);
+        if (details?.paths !== undefined) {
+          const cached = getCachedTrust(pk);
+          if (cached) {
+            const updatedTrust: TrustData = {
+              ...cached,
+              paths: details.paths,
+            };
+            cacheTrust(pk, updatedTrust);
+
+            // Update UI
+            setFollowersTrust((prev) => {
+              const updated = new Map(prev);
+              const existing = updated.get(pk);
+              if (existing) {
+                updated.set(pk, { ...existing, paths: details.paths });
+              }
+              return updated;
+            });
+          }
+        }
+      } catch {
+        // Ignore - keep using cached data without paths
+      }
+
+      // Small delay to avoid overwhelming the extension
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }, []);
+
+  // Fetch trust data for followers in batches when follows change
+  useEffect(() => {
+    const fetchFollowersTrust = async () => {
+      if (!wotRef.current || follows.length === 0) return;
+
+      // First, load cached trust data and mark uncached as loading
+      const cachedTrust = getCachedTrustBatch(follows);
+      const initialMap = new Map<string, TrustInfo>();
+      const needsPathsRecheck: string[] = [];
+
+      for (const pk of follows) {
+        const cached = cachedTrust.get(pk);
+        if (cached) {
+          initialMap.set(pk, { ...cached, isLoading: false });
+          // Track cached entries that need paths recheck
+          if (cached.paths === null && cached.distance !== null) {
+            needsPathsRecheck.push(pk);
+          }
+        } else {
+          initialMap.set(pk, {
+            distance: null,
+            paths: null,
+            isLoading: true,
+          });
+        }
+      }
+      setFollowersTrust(initialMap);
+
+      // Recheck paths for cached entries that have paths: null (in background)
+      if (needsPathsRecheck.length > 0) {
+        recheckPaths(needsPathsRecheck);
+      }
+
+      // Filter to only pubkeys needing trust data
+      const pubkeysToFetch = getPubkeysNeedingTrust(follows);
+      if (pubkeysToFetch.length === 0) {
+        return; // All trust data is cached
+      }
+
+      const BATCH_SIZE = 50;
+      const newTrustData = new Map<string, TrustData>();
+
+      for (let i = 0; i < pubkeysToFetch.length; i += BATCH_SIZE) {
+        const batch = pubkeysToFetch.slice(i, i + BATCH_SIZE);
+
+        try {
+          // Get distance and score with batchCheck
+          const results = await wotRef.current.batchCheck(batch);
+
+          // For each result, also get paths with getDetails
+          const batchTrust = new Map<string, TrustInfo>();
+          for (const pk of batch) {
+            const result = results.get(pk);
+            const distance = result?.distance ?? null;
+            let paths: number | null = null;
+
+            // Only call getDetails if we have a valid distance
+            if (distance !== null) {
+              try {
+                const details = await wotRef.current.getDetails(pk);
+                paths = details?.paths ?? null;
+              } catch {
+                // Continue without paths
+              }
+            }
+
+            // Only cache distance and paths - score calculated on the fly
+            const trust: TrustInfo = {
+              distance,
+              paths,
+              isLoading: false,
+            };
+            batchTrust.set(pk, trust);
+            newTrustData.set(pk, {
+              distance: trust.distance,
+              paths: trust.paths,
+            });
+          }
+
+          // Update UI with batch results
+          setFollowersTrust((prev) => {
+            const updated = new Map(prev);
+            batchTrust.forEach((trust, pk) => {
+              updated.set(pk, trust);
+            });
+            return updated;
+          });
+        } catch (err) {
+          console.warn(`[ProfilePageContent] Batch ${i / BATCH_SIZE} failed:`, err);
+          // Mark batch as done even on error
+          setFollowersTrust((prev) => {
+            const updated = new Map(prev);
+            for (const pk of batch) {
+              const existing = updated.get(pk);
+              if (existing?.isLoading) {
+                updated.set(pk, { ...existing, isLoading: false });
+              }
+            }
+            return updated;
+          });
+        }
+
+        // Small delay between batches
+        if (i + BATCH_SIZE < pubkeysToFetch.length) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+
+      // Cache all new trust data at the end
+      if (newTrustData.size > 0) {
+        cacheTrustBatch(newTrustData);
+      }
+    };
+
+    if (isWotReady && follows.length > 0) {
+      fetchFollowersTrust();
+    }
+  }, [isWotReady, follows]);
 
   // Fetch user data on mount or pubkey change
   useEffect(() => {
@@ -275,7 +559,7 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                     </div>
 
                     {/* Stats */}
-                    <div className="flex gap-6 mt-4">
+                    <div className="flex flex-wrap gap-6 mt-4">
                       <div>
                         <span className="font-semibold text-gray-900 dark:text-white">
                           {follows.length}
@@ -285,6 +569,98 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                         </span>
                       </div>
                     </div>
+
+                    {/* Trust info from WoT extension */}
+                    {isWotReady && (
+                      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                          {t("trustInfo")}
+                        </h3>
+                        {isLoadingTrust ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                            {t("loadingTrust")}
+                          </div>
+                        ) : profileTrust ? (() => {
+                          // Calculate score on the fly using config
+                          const score = profileTrust.distance !== null
+                            ? calculateTrustScore(
+                                profileTrust.distance,
+                                profileTrust.paths ?? 1,
+                                scoringConfig ?? undefined
+                              )
+                            : null;
+                          return (
+                          <div className="flex flex-wrap gap-4">
+                            {/* Distance (hops) */}
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t("hops")}</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">
+                                  {profileTrust.distance !== null ? profileTrust.distance : "—"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Paths */}
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t("paths")}</p>
+                                <p className="font-semibold text-gray-900 dark:text-white">
+                                  {profileTrust.paths !== null ? profileTrust.paths : "—"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Trust score */}
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                score !== null && score >= 0.7
+                                  ? "bg-green-100 dark:bg-green-900/30"
+                                  : score !== null && score >= 0.3
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30"
+                                  : "bg-red-100 dark:bg-red-900/30"
+                              }`}>
+                                <svg className={`w-4 h-4 ${
+                                  score !== null && score >= 0.7
+                                    ? "text-green-600 dark:text-green-400"
+                                    : score !== null && score >= 0.3
+                                    ? "text-yellow-600 dark:text-yellow-400"
+                                    : "text-red-600 dark:text-red-400"
+                                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{t("trustScore")}</p>
+                                <p className={`font-semibold ${
+                                  score !== null && score >= 0.7
+                                    ? "text-green-600 dark:text-green-400"
+                                    : score !== null && score >= 0.3
+                                    ? "text-yellow-600 dark:text-yellow-400"
+                                    : "text-red-600 dark:text-red-400"
+                                }`}>
+                                  {score !== null ? `${Math.round(score * 100)}%` : "—"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          );
+                        })() : (
+                          <p className="text-sm text-gray-500">{t("notInNetwork")}</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* About */}
                     {profile?.about && (
@@ -393,6 +769,15 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                     <div className="divide-y divide-gray-100 dark:divide-gray-700">
                       {filteredFollows.slice(0, 50).map((followPubkey) => {
                         const p = followProfiles.get(followPubkey);
+                        const trust = followersTrust.get(followPubkey);
+                        // Calculate score on the fly
+                        const score = trust?.distance !== null && trust?.distance !== undefined
+                          ? calculateTrustScore(
+                              trust.distance,
+                              trust.paths ?? 1,
+                              scoringConfig ?? undefined
+                            )
+                          : null;
                         return (
                           <button
                             key={followPubkey}
@@ -422,6 +807,27 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                                 </p>
                               )}
                             </div>
+                            {/* Trust badge */}
+                            {trust && !trust.isLoading && trust.distance !== null && (
+                              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
+                                score !== null && score >= 0.7
+                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                                  : score !== null && score >= 0.3
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+                                  : "bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400"
+                              }`}>
+                                <span>{trust.distance}h</span>
+                                {trust.paths !== null && (
+                                  <span>·{trust.paths}p</span>
+                                )}
+                                {score !== null && (
+                                  <span>·{Math.round(score * 100)}%</span>
+                                )}
+                              </div>
+                            )}
+                            {trust?.isLoading && (
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                            )}
                           </button>
                         );
                       })}

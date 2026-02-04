@@ -11,6 +11,14 @@ import {
 } from "@/lib/graph/types";
 import { formatPubkey } from "@/lib/graph/transformers";
 import { calculateTrustScore } from "@/lib/graph/colors";
+import {
+  getCachedProfiles,
+  cacheProfiles,
+  getPubkeysToFetch,
+  getCachedTrustBatch,
+  cacheTrustBatch,
+  TrustData,
+} from "@/lib/cache/profileCache";
 
 // Relays for profile fetching only
 const PROFILE_RELAYS = [
@@ -70,24 +78,37 @@ export function useGraphData() {
 
   /**
    * Fetch profiles for multiple pubkeys (optional, non-blocking)
+   * Uses localStorage cache first
    */
   const fetchProfiles = useCallback(
     async (pubkeys: string[]): Promise<Map<string, NodeProfile>> => {
-      const profiles = new Map<string, NodeProfile>();
+      // First, get all cached profiles (localStorage + memory ref)
+      const cachedFromStorage = getCachedProfiles(pubkeys);
+      const profiles = new Map<string, NodeProfile>(cachedFromStorage);
 
+      // Also check memory cache for any additional
       pubkeys.forEach((pk) => {
-        const cached = profileCacheRef.current.get(pk);
-        if (cached) profiles.set(pk, cached);
+        if (!profiles.has(pk)) {
+          const cached = profileCacheRef.current.get(pk);
+          if (cached) profiles.set(pk, cached);
+        }
       });
 
-      const toFetch = pubkeys.filter((pk) => !profileCacheRef.current.has(pk));
+      // Filter to pubkeys that need fetching
+      const toFetch = getPubkeysToFetch(pubkeys.filter((pk) => !profiles.has(pk)));
       if (toFetch.length === 0) return profiles;
 
       return new Promise((resolve) => {
         let resolved = false;
+        const newProfiles: NodeProfile[] = [];
+
         const timeoutId = setTimeout(() => {
           if (!resolved) {
             resolved = true;
+            // Cache new profiles to localStorage
+            if (newProfiles.length > 0) {
+              cacheProfiles(newProfiles);
+            }
             resolve(profiles);
           }
         }, 3000);
@@ -121,11 +142,16 @@ export function useGraphData() {
               };
               profiles.set(pubkey, profile);
               profileCacheRef.current.set(pubkey, profile);
+              newProfiles.push(profile);
             } else if (data[0] === "EOSE") {
               ws.close();
               if (!resolved) {
                 clearTimeout(timeoutId);
                 resolved = true;
+                // Cache new profiles to localStorage
+                if (newProfiles.length > 0) {
+                  cacheProfiles(newProfiles);
+                }
                 resolve(profiles);
               }
             }
@@ -138,6 +164,9 @@ export function useGraphData() {
           if (!resolved) {
             clearTimeout(timeoutId);
             resolved = true;
+            if (newProfiles.length > 0) {
+              cacheProfiles(newProfiles);
+            }
             resolve(profiles);
           }
         };
@@ -146,6 +175,9 @@ export function useGraphData() {
           if (!resolved) {
             clearTimeout(timeoutId);
             resolved = true;
+            if (newProfiles.length > 0) {
+              cacheProfiles(newProfiles);
+            }
             resolve(profiles);
           }
         };
@@ -257,21 +289,56 @@ export function useGraphData() {
         const existingIds = new Set(latestState.data.nodes.map((n) => n.id));
         const newPubkeys = follows.filter((pk: string) => !existingIds.has(pk));
 
-        // Get trust data from extension
-        let wotData: Map<string, { distance: number; score: number }> | null = null;
+        // Get trust data - first from cache, then from extension for uncached
+        // We only store distance and paths, score is calculated on the fly
+        const wotData = new Map<string, { distance: number; paths: number | null }>();
+
+        // Track pubkeys that need paths rechecked (cached with null paths)
+        const needsPathsRecheck: string[] = [];
+
         if (newPubkeys.length > 0) {
-          try {
-            console.log("[expandNodeFollows] Getting WoT data...");
-            const batchResults = await wotRef.current.batchCheck(newPubkeys);
-            wotData = new Map();
-            for (const [pk, result] of batchResults) {
-              wotData.set(pk, {
-                distance: result.distance ?? parentDistance + 1,
-                score: result.score ?? 0,
-              });
+          // Get cached trust data first
+          const cachedTrust = getCachedTrustBatch(newPubkeys);
+          cachedTrust.forEach((trust, pk) => {
+            wotData.set(pk, {
+              distance: trust.distance ?? parentDistance + 1,
+              paths: trust.paths,
+            });
+            // Track cached entries that need paths recheck
+            if (trust.paths === null && trust.distance !== null) {
+              needsPathsRecheck.push(pk);
             }
-          } catch (err) {
-            console.warn("[expandNodeFollows] Batch check failed:", err);
+          });
+
+          // Fetch trust for uncached pubkeys
+          const uncachedPubkeys = newPubkeys.filter((pk) => !cachedTrust.has(pk));
+          if (uncachedPubkeys.length > 0) {
+            try {
+              console.log("[expandNodeFollows] Getting WoT data for", uncachedPubkeys.length, "pubkeys...");
+              const batchResults = await wotRef.current.batchCheck(uncachedPubkeys);
+              const newTrustData = new Map<string, TrustData>();
+
+              for (const [pk, result] of batchResults) {
+                const distance = result.distance ?? parentDistance + 1;
+                wotData.set(pk, {
+                  distance,
+                  paths: null, // We don't fetch paths in expand to save time
+                });
+                newTrustData.set(pk, {
+                  distance,
+                  paths: null,
+                });
+                // New entries also need paths recheck
+                needsPathsRecheck.push(pk);
+              }
+
+              // Cache the new trust data
+              if (newTrustData.size > 0) {
+                cacheTrustBatch(newTrustData);
+              }
+            } catch (err) {
+              console.warn("[expandNodeFollows] Batch check failed:", err);
+            }
           }
         }
 
@@ -279,9 +346,11 @@ export function useGraphData() {
         const newLinks: GraphEdge[] = [];
 
         for (const followPubkey of follows) {
-          const extData = wotData?.get(followPubkey);
+          const extData = wotData.get(followPubkey);
           const distance = extData?.distance ?? parentDistance + 1;
-          const trustScore = extData?.score ?? calculateTrustScore(distance, 1);
+          const pathCount = extData?.paths ?? 1;
+          // Always calculate score on the fly (no config here, uses defaults)
+          const trustScore = calculateTrustScore(distance, pathCount);
 
           newLinks.push({
             source: pubkey,
@@ -320,6 +389,11 @@ export function useGraphData() {
             }
           });
         }
+
+        // Recheck paths in background for entries that have paths: null
+        if (needsPathsRecheck.length > 0 && wotRef.current) {
+          recheckPathsInBackground(needsPathsRecheck);
+        }
       } catch (err) {
         console.error("Failed to expand node:", err);
       } finally {
@@ -329,6 +403,34 @@ export function useGraphData() {
     },
     [expandNode, fetchProfiles, addProfiles, mergeData, setLoading, setError]
   );
+
+  /**
+   * Recheck paths in background for cached entries with null paths
+   */
+  const recheckPathsInBackground = useCallback(async (pubkeys: string[]) => {
+    if (!wotRef.current || pubkeys.length === 0) return;
+
+    for (const pk of pubkeys) {
+      try {
+        const details = await wotRef.current.getDetails(pk);
+        if (details?.paths !== undefined) {
+          const cached = getCachedTrustBatch([pk]).get(pk);
+          if (cached) {
+            const updatedTrust: TrustData = {
+              ...cached,
+              paths: details.paths,
+            };
+            cacheTrustBatch(new Map([[pk, updatedTrust]]));
+          }
+        }
+      } catch {
+        // Ignore - keep using cached data without paths
+      }
+
+      // Small delay to avoid overwhelming the extension
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }, []);
 
   // Reset refs when user changes
   useEffect(() => {

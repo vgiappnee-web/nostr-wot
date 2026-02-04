@@ -2,6 +2,13 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { NodeProfile, NostrNote } from "@/lib/graph/types";
+import {
+  getCachedProfile,
+  getCachedProfiles,
+  cacheProfile,
+  cacheProfiles,
+  getPubkeysToFetch,
+} from "@/lib/cache/profileCache";
 
 // Same relays as useGraphData
 const RELAYS = [
@@ -45,10 +52,16 @@ export function useUserProfile(): UseUserProfileResult {
   const oldestNoteTimestampRef = useRef<number | null>(null);
 
   /**
-   * Fetch profile (kind 0)
+   * Fetch profile (kind 0) - checks cache first
    */
   const fetchProfile = useCallback(
     async (pubkey: string): Promise<NodeProfile | null> => {
+      // Check cache first
+      const cached = getCachedProfile(pubkey);
+      if (cached) {
+        return cached;
+      }
+
       return new Promise((resolve) => {
         let profile: NodeProfile | null = null;
         let resolved = false;
@@ -57,6 +70,7 @@ export function useUserProfile(): UseUserProfileResult {
         const timeoutId = setTimeout(() => {
           if (!resolved) {
             resolved = true;
+            if (profile) cacheProfile(profile);
             resolve(profile);
           }
         }, RELAY_TIMEOUT);
@@ -102,6 +116,7 @@ export function useUserProfile(): UseUserProfileResult {
               if (completedRelays >= 2 && !resolved) {
                 clearTimeout(timeoutId);
                 resolved = true;
+                if (profile) cacheProfile(profile);
                 resolve(profile);
               }
             };
@@ -111,6 +126,7 @@ export function useUserProfile(): UseUserProfileResult {
               if (completedRelays >= 2 && !resolved) {
                 clearTimeout(timeoutId);
                 resolved = true;
+                if (profile) cacheProfile(profile);
                 resolve(profile);
               }
             };
@@ -516,16 +532,29 @@ export function useUserProfile(): UseUserProfileResult {
   }, []);
 
   /**
-   * Stream follow profiles progressively
+   * Stream follow profiles progressively - uses cache
    */
   const streamFollowProfiles = useCallback((pubkeys: string[]) => {
-    const profiles = new Map<string, NodeProfile>();
+    // First, load cached profiles immediately
+    const cachedProfiles = getCachedProfiles(pubkeys);
+    if (cachedProfiles.size > 0) {
+      setFollowProfiles(new Map(cachedProfiles));
+    }
+
+    // Filter to only uncached pubkeys
+    const pubkeysToFetch = getPubkeysToFetch(pubkeys);
+    if (pubkeysToFetch.length === 0) {
+      return; // All profiles are cached
+    }
+
+    const profiles = new Map(cachedProfiles);
+    const newProfiles: NodeProfile[] = [];
     let completedRelays = 0;
 
     // Batch in chunks of 50
     const chunks: string[][] = [];
-    for (let i = 0; i < pubkeys.length; i += 50) {
-      chunks.push(pubkeys.slice(i, i + 50));
+    for (let i = 0; i < pubkeysToFetch.length; i += 50) {
+      chunks.push(pubkeysToFetch.slice(i, i + 50));
     }
 
     for (const relayUrl of RELAYS.slice(0, 2)) {
@@ -551,14 +580,17 @@ export function useUserProfile(): UseUserProfileResult {
             if (data[0] === "EVENT" && data[2]?.kind === 0) {
               const pubkey = data[2].pubkey;
               const content = JSON.parse(data[2].content);
-              profiles.set(pubkey, {
+              const profile: NodeProfile = {
                 pubkey,
                 name: content.name,
                 displayName: content.display_name,
                 picture: content.picture,
                 about: content.about,
                 nip05: content.nip05,
-              });
+              };
+
+              profiles.set(pubkey, profile);
+              newProfiles.push(profile);
 
               // Update UI progressively
               setFollowProfiles(new Map(profiles));
@@ -570,10 +602,16 @@ export function useUserProfile(): UseUserProfileResult {
 
         ws.onerror = () => {
           completedRelays++;
+          if (completedRelays >= 2 && newProfiles.length > 0) {
+            cacheProfiles(newProfiles);
+          }
         };
 
         ws.onclose = () => {
           completedRelays++;
+          if (completedRelays >= 2 && newProfiles.length > 0) {
+            cacheProfiles(newProfiles);
+          }
         };
 
         setTimeout(() => ws.close(), RELAY_TIMEOUT - 1000);

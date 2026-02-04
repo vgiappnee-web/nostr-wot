@@ -1,25 +1,19 @@
 // Trust-based color calculations for graph visualization
-// Uses the extension formula: score = baseScore × distanceWeight × (1 + pathBonus)
+// Uses the extension formula: score = distanceWeight × (1 + pathBonus)
 
-// Distance weights from extension config
-export const DISTANCE_WEIGHTS: Record<number, number> = {
-  0: 1.0, // Root (self)
-  1: 1.0, // 1 hop
-  2: 0.5, // 2 hops
-  3: 0.25, // 3 hops
-  4: 0.1, // 4+ hops
-};
+import {
+  WoTScoringConfig,
+  DEFAULT_SCORING_CONFIG,
+} from "@/lib/cache/profileCache";
 
-// Path bonus multipliers from extension config
-export const PATH_BONUSES: Record<number, number> = {
-  1: 0, // Single path, no bonus
-  2: 0.05, // Per additional path at 2 hops
-  3: 0.02, // Per additional path at 3 hops
-  4: 0.01, // Per additional path at 4+ hops
-};
+// Re-export types and defaults
+export type { WoTScoringConfig };
+export { DEFAULT_SCORING_CONFIG };
 
-// Maximum path bonus cap
-export const MAX_PATH_BONUS = 0.25;
+// Re-export for backward compatibility
+export const DISTANCE_WEIGHTS = DEFAULT_SCORING_CONFIG.distanceWeights;
+export const PATH_BONUS = DEFAULT_SCORING_CONFIG.pathBonus;
+export const MAX_PATH_BONUS = DEFAULT_SCORING_CONFIG.maxPathBonus;
 
 // Color stops for the trust gradient (green to red)
 export const TRUST_GRADIENT = {
@@ -37,38 +31,54 @@ export const TRUST_THRESHOLDS = {
 /**
  * Get distance weight based on hop count
  */
-export function getDistanceWeight(distance: number): number {
-  if (distance <= 0) return 1.0;
-  if (distance >= 4) return DISTANCE_WEIGHTS[4];
-  return DISTANCE_WEIGHTS[distance] || 0.1;
+export function getDistanceWeight(
+  distance: number,
+  config?: WoTScoringConfig
+): number {
+  const weights = config?.distanceWeights ?? DISTANCE_WEIGHTS;
+
+  if (distance <= 0) return weights[0] ?? 1.0;
+  // Find the highest defined weight key
+  const maxKey = Math.max(...Object.keys(weights).map(Number));
+  if (distance >= maxKey) return weights[maxKey] ?? 0.1;
+  return weights[distance] ?? 0.1;
 }
 
 /**
- * Get path bonus based on distance and number of paths
+ * Get path bonus based on number of paths
+ * Uses SDK formula: (pathCount - 1) * pathBonus, capped at maxPathBonus
  */
-export function getPathBonus(distance: number, pathCount: number): number {
-  if (pathCount <= 1 || distance <= 1) return 0;
+export function getPathBonus(
+  pathCount: number,
+  config?: WoTScoringConfig
+): number {
+  if (pathCount <= 1) return 0;
 
-  const bonusPerPath = distance >= 4 ? PATH_BONUSES[4] : PATH_BONUSES[distance] || 0;
+  const bonusPerPath = config?.pathBonus ?? PATH_BONUS;
+  const maxBonus = config?.maxPathBonus ?? MAX_PATH_BONUS;
+
   const totalBonus = (pathCount - 1) * bonusPerPath;
-
-  return Math.min(totalBonus, MAX_PATH_BONUS);
+  return Math.min(totalBonus, maxBonus);
 }
 
 /**
- * Calculate trust score using extension formula
- * score = baseScore × distanceWeight × (1 + pathBonus)
+ * Calculate trust score using SDK formula
+ * score = distanceWeight × (1 + pathBonus)
+ *
+ * @param distance - Number of hops from root
+ * @param pathCount - Number of paths to the target
+ * @param config - Optional scoring config from SDK getScoringConfig()
  */
 export function calculateTrustScore(
   distance: number,
   pathCount: number = 1,
-  baseScore: number = 1.0
+  config?: WoTScoringConfig
 ): number {
   if (distance === 0) return 1.0; // Root is always fully trusted
 
-  const distanceWeight = getDistanceWeight(distance);
-  const pathBonus = getPathBonus(distance, pathCount);
-  const score = baseScore * distanceWeight * (1 + pathBonus);
+  const distanceWeight = getDistanceWeight(distance, config);
+  const pathBonus = getPathBonus(pathCount, config);
+  const score = distanceWeight * (1 + pathBonus);
 
   return Math.max(0, Math.min(1, score));
 }

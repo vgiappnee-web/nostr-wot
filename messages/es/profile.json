@@ -14,5 +14,11 @@
   "goBack": "Volver",
   "searchFollowing": "Buscar siguiendo...",
   "noResults": "No se encontraron resultados",
-  "more": "más"
+  "more": "más",
+  "trustInfo": "Web of Trust",
+  "loadingTrust": "Cargando datos de confianza...",
+  "hops": "Saltos",
+  "paths": "Rutas",
+  "trustScore": "Confianza",
+  "notInNetwork": "No está en tu red"
 }
