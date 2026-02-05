@@ -7,12 +7,41 @@ import { NodeProfile } from "@/lib/graph/types";
 
 const CACHE_KEY = "nostr-wot-profile-cache";
 const TRUST_CACHE_KEY = "nostr-wot-trust-cache";
+const TRUST_CACHE_VERSION_KEY = "nostr-wot-trust-cache-version";
+const CURRENT_CACHE_VERSION = 2; // Bump this when cache format changes
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+
+/**
+ * Check and migrate trust cache if version changed
+ * This clears old cache when the format changes (e.g., adding score field)
+ */
+function checkAndMigrateTrustCache(): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    const storedVersion = localStorage.getItem(TRUST_CACHE_VERSION_KEY);
+    const version = storedVersion ? parseInt(storedVersion, 10) : 0;
+
+    if (version < CURRENT_CACHE_VERSION) {
+      // Clear old cache format
+      localStorage.removeItem(TRUST_CACHE_KEY);
+      localStorage.setItem(TRUST_CACHE_VERSION_KEY, String(CURRENT_CACHE_VERSION));
+      console.log("[profileCache] Cleared old trust cache (version upgrade)");
+    }
+  } catch {
+    // Ignore errors
+  }
+}
+
+// Run migration check on module load
+if (typeof window !== "undefined") {
+  checkAndMigrateTrustCache();
+}
 
 export interface TrustData {
   distance: number | null;
   paths: number | null;
-  // Note: score is NOT cached - calculated on the fly using SDK config
+  score: number | null;
 }
 
 interface CachedProfile extends NodeProfile {
@@ -244,9 +273,19 @@ function saveTrustCache(cache: TrustCache): void {
 
 /**
  * Check if cached trust data is still valid
+ * Also checks that score is present (new format)
  */
 function isTrustValid(cachedTrust: CachedTrust): boolean {
-  return Date.now() - cachedTrust.cachedAt < CACHE_EXPIRY_MS;
+  // Check expiry
+  if (Date.now() - cachedTrust.cachedAt >= CACHE_EXPIRY_MS) {
+    return false;
+  }
+  // Check that it has the new format with score field
+  // (score can be null for entries not in WoT, but the field must exist)
+  if (!("score" in cachedTrust)) {
+    return false;
+  }
+  return true;
 }
 
 /**

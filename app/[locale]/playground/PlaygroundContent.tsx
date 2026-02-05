@@ -1,32 +1,22 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui";
 import { GraphPlayground } from "@/components/playground";
-import { useWoTContext, useExtension } from "nostr-wot-sdk/react";
+import { useExtension } from "nostr-wot-sdk/react";
 
 export default function PlaygroundContent() {
   const t = useTranslations("playground");
-  const { wot, isReady } = useWoTContext();
   const extension = useExtension();
-  const [isRetrying, setIsRetrying] = useState(false);
 
-  const formatPubkey = (pk: string) => {
-    return `${pk.slice(0, 8)}...${pk.slice(-8)}`;
-  };
-
-  // Retry detection by reloading the page
+  // Retry check without page reload
   const handleRetry = useCallback(() => {
-    setIsRetrying(true);
-    // Give time for animation, then reload to re-trigger extension detection
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
-  }, []);
+    extension.refresh();
+  }, [extension]);
 
-  // Show loading while extension initializes
-  if (!extension.isChecked) {
+  // Show loading while extension check is in progress
+  if (!extension.isChecked || extension.isChecking) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -39,8 +29,8 @@ export default function PlaygroundContent() {
     );
   }
 
-  // Show message if extension not installed
-  if (!extension.isInstalled) {
+  // Show message if extension not available
+  if (!extension.isConnected) {
     return (
       <main className="min-h-screen">
         <section className="py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
@@ -81,7 +71,7 @@ export default function PlaygroundContent() {
               {/* Option 1: Already installed */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4 text-left">
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                     1
                   </div>
                   <div>
@@ -93,22 +83,12 @@ export default function PlaygroundContent() {
                     </p>
                     <button
                       onClick={handleRetry}
-                      disabled={isRetrying}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      {isRetrying ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                          {t("extension.retrying")}
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          {t("extension.retry")}
-                        </>
-                      )}
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      {t("extension.retry")}
                     </button>
                   </div>
                 </div>
@@ -117,7 +97,7 @@ export default function PlaygroundContent() {
               {/* Option 2: Need to install */}
               <div className="bg-gray-100 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4 text-left">
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                  <div className="shrink-0 w-6 h-6 bg-gray-500 text-white rounded-full flex items-center justify-center text-sm font-medium">
                     2
                   </div>
                   <div>
@@ -151,49 +131,6 @@ export default function PlaygroundContent() {
     );
   }
 
-  // Show connecting state
-  if (extension.isConnecting) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Connecting to extension...
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  // Show error if connection failed
-  if (extension.error) {
-    return (
-      <main className="min-h-screen">
-        <section className="py-16 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 max-w-md mx-auto">
-              <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-                Connection Error
-              </h2>
-              <p className="text-red-700 dark:text-red-300 mb-4">
-                {extension.error}
-              </p>
-              <button
-                onClick={() => extension.connect()}
-                className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
-  // Get pubkey from WoT instance
-  const userPubkey = wot ? null : null; // Will be populated by useGraphData
-
   // Show graph when extension is connected
   return (
     <main className="min-h-screen">
@@ -207,7 +144,7 @@ export default function PlaygroundContent() {
                 {t("hero.title")}
               </h1>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-sm">
               <div className="w-2 h-2 bg-trust-green rounded-full animate-pulse" />
               <span className="text-gray-400">Extension Connected</span>
             </div>

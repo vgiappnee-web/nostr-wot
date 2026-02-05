@@ -7,7 +7,8 @@ import { useGraph } from "@/contexts/GraphContext";
 import { useNodeSelection } from "@/hooks/useNodeSelection";
 import { useGraphData } from "@/hooks/useGraphData";
 import { GraphNode, GraphEdge } from "@/lib/graph/types";
-import { calculateTrustScore, getTrustColorHex } from "@/lib/graph/colors";
+import { getTrustColorHex } from "@/lib/graph/colors";
+import NodeContextMenu from "./NodeContextMenu";
 
 // Use 2D graph for much better performance (canvas-based, not WebGL meshes)
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"), {
@@ -39,6 +40,10 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const graphRef = useRef<any>(null);
   const [showStartPrompt, setShowStartPrompt] = useState(true);
+  const [contextMenu, setContextMenu] = useState<{
+    node: GraphNode;
+    position: { x: number; y: number };
+  } | null>(null);
 
   // Check if we should use static layout (no physics) for performance
   const useStaticLayout = filteredData.nodes.length > DISABLE_SIMULATION_THRESHOLD;
@@ -86,15 +91,15 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     return { nodes, links };
   }, [filteredData, useStaticLayout]);
 
-  // Pre-compute colors for performance
+  // Pre-compute colors for performance - use SDK-provided trustScore directly
   const nodeColors = useMemo(() => {
     const colors = new Map<string, string>();
     for (const node of visibleData.nodes) {
       if (node.isRoot) {
         colors.set(node.id, "#6366f1");
       } else {
-        const trustScore = calculateTrustScore(node.distance, node.pathCount || 1);
-        colors.set(node.id, getTrustColorHex(trustScore));
+        // Use the SDK-provided trustScore from the node directly
+        colors.set(node.id, getTrustColorHex(node.trustScore));
       }
     }
     return colors;
@@ -107,17 +112,32 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     }
   }, [filteredData.nodes.length]);
 
-  // Node click handler
+  // Node click handler - shows context menu instead of auto-expanding
   const handleNodeClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (node: any) => {
+    (node: any, event: MouseEvent) => {
       const graphNode = node as GraphNode;
       select(graphNode);
 
-      // Expand on click (including root node)
-      if (graphNode.distance < 3) {
+      // Auto-expand only for root node (first click)
+      if (graphNode.isRoot && filteredData.nodes.length === 1) {
         expandNodeFollows(graphNode.id);
         setShowStartPrompt(false);
+        return;
+      }
+
+      // Show context menu for all other nodes
+      // Get container position to calculate relative position
+      const container = graphRef.current?.containerEl?.parentElement;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        setContextMenu({
+          node: graphNode,
+          position: {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+          },
+        });
       }
 
       // Center on node
@@ -126,8 +146,29 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
         graphRef.current.zoom(2, 500);
       }
     },
-    [select, expandNodeFollows]
+    [select, expandNodeFollows, filteredData.nodes.length]
   );
+
+  // Handle expand from context menu
+  const handleExpandFromMenu = useCallback(() => {
+    if (contextMenu?.node) {
+      expandNodeFollows(contextMenu.node.id);
+      setShowStartPrompt(false);
+    }
+  }, [contextMenu, expandNodeFollows]);
+
+  // Handle view profile from context menu
+  const handleViewProfileFromMenu = useCallback(() => {
+    if (contextMenu?.node) {
+      // Open profile in new tab
+      window.open(`/profile/${contextMenu.node.id}`, "_blank");
+    }
+  }, [contextMenu]);
+
+  // Close context menu
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
 
   // Node hover handlers
   const handleNodeHover = useCallback(
@@ -138,9 +179,10 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     [setHovered]
   );
 
-  // Background click to deselect
+  // Background click to deselect and close context menu
   const handleBackgroundClick = useCallback(() => {
     select(null);
+    setContextMenu(null);
   }, [select]);
 
   // Custom canvas node rendering - much faster than Three.js
@@ -189,12 +231,8 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
           : (graphLink.target as GraphNode);
 
       if (targetNode) {
-        const trustScore = calculateTrustScore(
-          targetNode.distance,
-          targetNode.pathCount || 1
-        );
-        // Return with alpha for performance
-        const hex = getTrustColorHex(trustScore);
+        // Use the SDK-provided trustScore from the node directly
+        const hex = getTrustColorHex(targetNode.trustScore);
         return hex + "40"; // 25% opacity
       }
       return "#ffffff20";
@@ -302,7 +340,7 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
             <span className="mx-1">·</span>
             <span>{activeNode.pathCount || 1} path{(activeNode.pathCount || 1) !== 1 ? 's' : ''}</span>
             <span className="mx-1">·</span>
-            <span className="text-trust-green">{Math.round(calculateTrustScore(activeNode.distance, activeNode.pathCount || 1) * 100)}% trust</span>
+            <span className="text-trust-green">{Math.round(activeNode.trustScore * 100)}% trust</span>
           </div>
           <div className="text-xs text-gray-500 mt-1 font-mono truncate">
             {activeNode.id.slice(0, 16)}...
@@ -337,6 +375,18 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Context menu */}
+      {contextMenu && (
+        <NodeContextMenu
+          node={contextMenu.node}
+          position={contextMenu.position}
+          isExpanded={state.expandedNodes.has(contextMenu.node.id)}
+          onExpand={handleExpandFromMenu}
+          onViewProfile={handleViewProfileFromMenu}
+          onClose={handleCloseContextMenu}
+        />
       )}
     </div>
   );

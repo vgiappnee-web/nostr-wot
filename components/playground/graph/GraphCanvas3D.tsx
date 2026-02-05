@@ -6,7 +6,7 @@ import { useGraph } from "@/contexts/GraphContext";
 import { useNodeSelection } from "@/hooks/useNodeSelection";
 import { useGraphData } from "@/hooks/useGraphData";
 import { GraphNode, GraphEdge } from "@/lib/graph/types";
-import { calculateTrustScore, getTrustColorHex } from "@/lib/graph/colors";
+import { getTrustColorHex } from "@/lib/graph/colors";
 
 // Dynamic import for 3D graph (WebGL-based)
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"), {
@@ -51,15 +51,15 @@ export default function GraphCanvas3D({ width, height }: GraphCanvas3DProps) {
     return { nodes, links };
   }, [filteredData]);
 
-  // Pre-compute colors
+  // Pre-compute colors - use SDK-provided trustScore directly
   const nodeColors = useMemo(() => {
     const colors = new Map<string, string>();
     for (const node of visibleData.nodes) {
       if (node.isRoot) {
         colors.set(node.id, "#6366f1");
       } else {
-        const trustScore = calculateTrustScore(node.distance, node.pathCount || 1);
-        colors.set(node.id, getTrustColorHex(trustScore));
+        // Use the SDK-provided trustScore from the node directly
+        colors.set(node.id, getTrustColorHex(node.trustScore));
       }
     }
     return colors;
@@ -147,8 +147,8 @@ export default function GraphCanvas3D({ width, height }: GraphCanvas3DProps) {
           : (graphLink.target as GraphNode);
 
       if (targetNode) {
-        const trustScore = calculateTrustScore(targetNode.distance, targetNode.pathCount || 1);
-        const hex = getTrustColorHex(trustScore);
+        // Use SDK-provided trustScore directly
+        const hex = getTrustColorHex(targetNode.trustScore);
         return hex + "60"; // 37% opacity
       }
       return "#ffffff30";
@@ -241,7 +241,7 @@ export default function GraphCanvas3D({ width, height }: GraphCanvas3DProps) {
             <span className="mx-1">·</span>
             <span>{activeNode.pathCount || 1} path{(activeNode.pathCount || 1) !== 1 ? "s" : ""}</span>
             <span className="mx-1">·</span>
-            <span className="text-trust-green">{Math.round(calculateTrustScore(activeNode.distance, activeNode.pathCount || 1) * 100)}% trust</span>
+            <span className="text-trust-green">{Math.round(activeNode.trustScore * 100)}% trust</span>
           </div>
           <div className="text-xs text-gray-500 mt-1 font-mono truncate">
             {activeNode.id.slice(0, 16)}...

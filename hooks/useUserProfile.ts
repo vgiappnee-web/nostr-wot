@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
+import { useWoTContext } from "nostr-wot-sdk/react";
 import { NodeProfile, NostrNote } from "@/lib/graph/types";
 import {
   getCachedProfile,
@@ -10,7 +11,7 @@ import {
   getPubkeysToFetch,
 } from "@/lib/cache/profileCache";
 
-// Same relays as useGraphData
+// Relays for profile and notes fetching (follows come from SDK)
 const RELAYS = [
   "wss://relay.damus.io",
   "wss://relay.nostr.band",
@@ -18,7 +19,7 @@ const RELAYS = [
   "wss://relay.snort.social",
 ];
 
-const RELAY_TIMEOUT = 5000; // Reduced from 10s to 5s
+const RELAY_TIMEOUT = 5000;
 
 interface UseUserProfileResult {
   profile: NodeProfile | null;
@@ -34,9 +35,12 @@ interface UseUserProfileResult {
 }
 
 /**
- * Hook to fetch complete user data from Nostr relays
+ * Hook to fetch complete user data
+ * Uses SDK for follows, relays for profile and notes
  */
 export function useUserProfile(): UseUserProfileResult {
+  const { wot } = useWoTContext();
+
   const [profile, setProfile] = useState<NodeProfile | null>(null);
   const [follows, setFollows] = useState<string[]>([]);
   const [followProfiles, setFollowProfiles] = useState<Map<string, NodeProfile>>(
@@ -50,6 +54,8 @@ export function useUserProfile(): UseUserProfileResult {
 
   const currentPubkeyRef = useRef<string | null>(null);
   const oldestNoteTimestampRef = useRef<number | null>(null);
+  const wotRef = useRef(wot);
+  wotRef.current = wot;
 
   /**
    * Fetch profile (kind 0) - checks cache first
@@ -140,9 +146,9 @@ export function useUserProfile(): UseUserProfileResult {
   );
 
   /**
-   * Fetch follows (kind 3)
+   * Fetch follows from relays (fallback when SDK not available)
    */
-  const fetchFollows = useCallback(async (pubkey: string): Promise<string[]> => {
+  const fetchFollowsFromRelays = useCallback(async (pubkey: string): Promise<string[]> => {
     return new Promise((resolve) => {
       const follows = new Set<string>();
       let resolved = false;
@@ -213,177 +219,30 @@ export function useUserProfile(): UseUserProfileResult {
   }, []);
 
   /**
-   * Fetch profiles for multiple pubkeys
+   * Fetch follows - tries SDK first, falls back to relays
    */
-  const fetchProfiles = useCallback(
-    async (pubkeys: string[]): Promise<Map<string, NodeProfile>> => {
-      const profiles = new Map<string, NodeProfile>();
-
-      if (pubkeys.length === 0) return profiles;
-
-      return new Promise((resolve) => {
-        let resolved = false;
-        let completedRelays = 0;
-
-        const timeoutId = setTimeout(() => {
-          if (!resolved) {
-            resolved = true;
-            resolve(profiles);
-          }
-        }, RELAY_TIMEOUT);
-
-        // Batch in chunks of 50
-        const chunks: string[][] = [];
-        for (let i = 0; i < pubkeys.length; i += 50) {
-          chunks.push(pubkeys.slice(i, i + 50));
+  const fetchFollows = useCallback(async (pubkey: string): Promise<string[]> => {
+    // Try SDK first if available
+    if (wotRef.current) {
+      try {
+        console.log("[useUserProfile] Fetching follows via SDK...");
+        const follows = await wotRef.current.getFollows(pubkey);
+        if (follows && follows.length > 0) {
+          console.log("[useUserProfile] Got", follows.length, "follows from SDK");
+          return follows;
         }
+      } catch (err) {
+        console.warn("[useUserProfile] SDK getFollows failed, falling back to relays:", err);
+      }
+    } else {
+      console.log("[useUserProfile] SDK not ready, fetching follows from relays...");
+    }
 
-        for (const relayUrl of RELAYS.slice(0, 2)) {
-          try {
-            const ws = new WebSocket(relayUrl);
-
-            ws.onopen = () => {
-              for (let i = 0; i < chunks.length; i++) {
-                const subId = `profiles-${Date.now()}-${i}`;
-                ws.send(
-                  JSON.stringify([
-                    "REQ",
-                    subId,
-                    { kinds: [0], authors: chunks[i], limit: chunks[i].length },
-                  ])
-                );
-              }
-            };
-
-            ws.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data);
-                if (data[0] === "EVENT" && data[2]?.kind === 0) {
-                  const pubkey = data[2].pubkey;
-                  const content = JSON.parse(data[2].content);
-                  profiles.set(pubkey, {
-                    pubkey,
-                    name: content.name,
-                    displayName: content.display_name,
-                    picture: content.picture,
-                    about: content.about,
-                    nip05: content.nip05,
-                  });
-                }
-              } catch {
-                // Ignore
-              }
-            };
-
-            ws.onerror = () => {
-              completedRelays++;
-              if (completedRelays >= 2 && !resolved) {
-                clearTimeout(timeoutId);
-                resolved = true;
-                resolve(profiles);
-              }
-            };
-
-            ws.onclose = () => {
-              completedRelays++;
-              if (completedRelays >= 2 && !resolved) {
-                clearTimeout(timeoutId);
-                resolved = true;
-                resolve(profiles);
-              }
-            };
-
-            setTimeout(() => ws.close(), RELAY_TIMEOUT - 1000);
-          } catch {
-            completedRelays++;
-          }
-        }
-      });
-    },
-    []
-  );
-
-  /**
-   * Fetch notes (kind 1)
-   */
-  const fetchNotes = useCallback(
-    async (pubkey: string, until?: number): Promise<NostrNote[]> => {
-      return new Promise((resolve) => {
-        const notesMap = new Map<string, NostrNote>();
-        let resolved = false;
-        let completedRelays = 0;
-
-        const timeoutId = setTimeout(() => {
-          if (!resolved) {
-            resolved = true;
-            resolve(Array.from(notesMap.values()));
-          }
-        }, RELAY_TIMEOUT);
-
-        for (const relayUrl of RELAYS) {
-          try {
-            const ws = new WebSocket(relayUrl);
-            const subId = `notes-${Date.now()}-${Math.random()}`;
-
-            ws.onopen = () => {
-              const filter: Record<string, unknown> = {
-                kinds: [1],
-                authors: [pubkey],
-                limit: 20,
-              };
-              if (until) filter.until = until;
-              ws.send(JSON.stringify(["REQ", subId, filter]));
-            };
-
-            ws.onmessage = (event) => {
-              try {
-                const data = JSON.parse(event.data);
-                if (data[0] === "EVENT" && data[2]?.kind === 1) {
-                  const note: NostrNote = {
-                    id: data[2].id,
-                    pubkey: data[2].pubkey,
-                    content: data[2].content,
-                    created_at: data[2].created_at,
-                    tags: data[2].tags || [],
-                    kind: 1,
-                    sig: data[2].sig,
-                  };
-                  if (!notesMap.has(note.id)) {
-                    notesMap.set(note.id, note);
-                  }
-                } else if (data[0] === "EOSE") {
-                  ws.close();
-                }
-              } catch {
-                // Ignore
-              }
-            };
-
-            ws.onerror = () => {
-              completedRelays++;
-              if (completedRelays >= RELAYS.length && !resolved) {
-                clearTimeout(timeoutId);
-                resolved = true;
-                resolve(Array.from(notesMap.values()));
-              }
-            };
-
-            ws.onclose = () => {
-              completedRelays++;
-              if (completedRelays >= RELAYS.length && !resolved) {
-                clearTimeout(timeoutId);
-                resolved = true;
-                resolve(Array.from(notesMap.values()));
-              }
-            };
-          } catch {
-            completedRelays++;
-          }
-        }
-      });
-    },
-    []
-  );
+    // Fall back to relay fetching
+    const follows = await fetchFollowsFromRelays(pubkey);
+    console.log("[useUserProfile] Got", follows.length, "follows from relays");
+    return follows;
+  }, [fetchFollowsFromRelays]);
 
   /**
    * Fetch all user data - streams progressively as data arrives

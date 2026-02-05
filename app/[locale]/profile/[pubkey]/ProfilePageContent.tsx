@@ -16,30 +16,10 @@ import {
   cacheTrust,
   cacheTrustBatch,
   getPubkeysNeedingTrust,
-  WoTScoringConfig,
 } from "@/lib/cache/profileCache";
-import { calculateTrustScore } from "@/lib/graph/colors";
 
 interface TrustInfo extends TrustData {
   isLoading?: boolean;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function parseConfigToScoringConfig(sdkConfig: any): WoTScoringConfig | null {
-  if (!sdkConfig) return null;
-
-  try {
-    return {
-      distanceWeights: sdkConfig.distanceWeights ?? {
-        0: 1.0, 1: 1.0, 2: 0.5, 3: 0.25, 4: 0.1
-      },
-      mutualBonus: sdkConfig.mutualBonus ?? 0.5,
-      pathBonus: sdkConfig.pathBonus ?? 0.1,
-      maxPathBonus: sdkConfig.maxPathBonus ?? 0.5,
-    };
-  } catch {
-    return null;
-  }
 }
 
 interface ProfilePageContentProps {
@@ -67,88 +47,54 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
   const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Trust data from WoT extension
+  // Trust data from WoT extension (SDK now provides scores directly)
   const [profileTrust, setProfileTrust] = useState<TrustInfo | null>(null);
   const [isLoadingTrust, setIsLoadingTrust] = useState(false);
   const [followersTrust, setFollowersTrust] = useState<Map<string, TrustInfo>>(new Map());
-  const [scoringConfig, setScoringConfig] = useState<WoTScoringConfig | null>(null);
+
+  // Pagination state for followers
+  const PAGE_SIZE = 20;
+  const [visibleFollowersCount, setVisibleFollowersCount] = useState(PAGE_SIZE);
+  const [isLoadingMoreFollowers, setIsLoadingMoreFollowers] = useState(false);
 
   const wotRef = useRef(wot);
   wotRef.current = wot;
-
-  // Get scoring config from SDK when ready
-  useEffect(() => {
-    const fetchConfig = async () => {
-      if (!wotRef.current || !isWotReady) return;
-
-      try {
-        // getExtensionConfig returns the extension config including scoring
-        const extensionConfig = await wotRef.current.getExtensionConfig();
-        if (extensionConfig?.scoring) {
-          const parsed = parseConfigToScoringConfig(extensionConfig.scoring);
-          if (parsed) {
-            setScoringConfig(parsed);
-          }
-        }
-      } catch (err) {
-        console.warn("[ProfilePageContent] Failed to get scoring config:", err);
-      }
-    };
-
-    fetchConfig();
-  }, [isWotReady]);
 
   // Fetch trust data for profile when WoT is ready
   useEffect(() => {
     const fetchProfileTrust = async () => {
       if (!wotRef.current || !pubkey) return;
 
-      // Check cache first
+      // Check cache first - getCachedTrust returns null if cache is invalid/old format
       const cached = getCachedTrust(pubkey);
       if (cached) {
         setProfileTrust(cached);
-
-        // If paths is null, try to fetch it and update cache using getDistanceBatch
-        // (only needed for entries cached before SDK upgrade)
-        if (cached.paths === null && cached.distance !== null) {
-          try {
-            const results = await wotRef.current.getDistanceBatch([pubkey], true);
-            const result = results[pubkey] as { hops: number; paths: number } | undefined;
-            if (result?.paths !== undefined) {
-              const updatedTrust: TrustData = {
-                distance: result.hops ?? cached.distance,
-                paths: result.paths,
-              };
-              cacheTrust(pubkey, updatedTrust);
-              setProfileTrust(updatedTrust);
-            }
-          } catch {
-            // Ignore - keep using cached data without paths
-          }
-        }
         return;
       }
 
       setIsLoadingTrust(true);
       try {
-        // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
-        const results = await wotRef.current.getDistanceBatch([pubkey], true);
-        const result = results[pubkey] as { hops: number; paths: number } | undefined;
+        // Use getDistanceBatch with includePaths and includeScores
+        const results = await wotRef.current.getDistanceBatch([pubkey], { includePaths: true, includeScores: true });
+        console.log("[ProfilePageContent] SDK getDistanceBatch response for profile:", JSON.stringify(results, null, 2));
+        const result = results[pubkey];
 
-        if (result) {
-          const distance = result.hops ?? null;
-          const paths = result.paths ?? null;
+        // Expecting { hops, paths, score } | null from SDK
+        const trustData: TrustData = result !== null && result !== undefined
+          ? {
+              distance: (result as { hops: number; paths: number; score: number }).hops,
+              paths: (result as { hops: number; paths: number; score: number }).paths,
+              score: (result as { hops: number; paths: number; score: number }).score,
+            }
+          : {
+              distance: null,
+              paths: null,
+              score: null,
+            };
 
-          // Only cache distance and paths - score calculated on the fly
-          const trustData: TrustData = {
-            distance,
-            paths,
-          };
-
-          // Cache the result
-          cacheTrust(pubkey, trustData);
-          setProfileTrust(trustData);
-        }
+        // Cache the result
+        cacheTrust(pubkey, trustData);
+        setProfileTrust(trustData);
       } catch (err) {
         console.warn("[ProfilePageContent] Failed to get trust:", err);
       } finally {
@@ -161,150 +107,138 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
     }
   }, [isWotReady, pubkey]);
 
-  // Helper to recheck paths for cached entries that have paths: null
-  // (only needed for entries cached before SDK upgrade)
-  const recheckPaths = useCallback(async (pubkeys: string[]) => {
+  // Fetch trust data for a batch of followers
+  const fetchFollowersTrustBatch = useCallback(async (pubkeys: string[]) => {
     if (!wotRef.current || pubkeys.length === 0) return;
 
-    // Use getDistanceBatch with includePaths=true to efficiently get paths for all pubkeys
-    try {
-      const results = await wotRef.current.getDistanceBatch(pubkeys, true);
+    // Get cached data first
+    const cachedTrust = getCachedTrustBatch(pubkeys);
+    const pubkeysNeedingFetch = pubkeys.filter(pk => !cachedTrust.has(pk));
 
-      for (const pk of pubkeys) {
-        const result = results[pk] as { hops: number; paths: number } | undefined;
-        if (result?.paths !== undefined) {
-          const cached = getCachedTrust(pk);
-          if (cached) {
-            const updatedTrust: TrustData = {
-              distance: result.hops ?? cached.distance,
-              paths: result.paths,
-            };
-            cacheTrust(pk, updatedTrust);
+    // Set cached data immediately
+    if (cachedTrust.size > 0) {
+      setFollowersTrust((prev) => {
+        const updated = new Map(prev);
+        cachedTrust.forEach((trust, pk) => {
+          updated.set(pk, { ...trust, isLoading: false });
+        });
+        return updated;
+      });
+    }
 
-            // Update UI
-            setFollowersTrust((prev) => {
-              const updated = new Map(prev);
-              const existing = updated.get(pk);
-              if (existing) {
-                updated.set(pk, { ...existing, paths: result.paths });
-              }
-              return updated;
+    // Mark uncached as loading
+    if (pubkeysNeedingFetch.length > 0) {
+      setFollowersTrust((prev) => {
+        const updated = new Map(prev);
+        for (const pk of pubkeysNeedingFetch) {
+          if (!updated.has(pk)) {
+            updated.set(pk, {
+              distance: null,
+              paths: null,
+              score: null,
+              isLoading: true,
             });
           }
         }
+        return updated;
+      });
+    }
+
+    if (pubkeysNeedingFetch.length === 0) return;
+
+    const BATCH_SIZE = 50;
+    const newTrustData = new Map<string, TrustData>();
+
+    for (let i = 0; i < pubkeysNeedingFetch.length; i += BATCH_SIZE) {
+      const batch = pubkeysNeedingFetch.slice(i, i + BATCH_SIZE);
+
+      try {
+        const results = await wotRef.current.getDistanceBatch(batch, { includePaths: true, includeScores: true });
+        console.log(`[ProfilePageContent] SDK getDistanceBatch batch ${i / BATCH_SIZE} response (first 3):`,
+          JSON.stringify(Object.fromEntries(Object.entries(results).slice(0, 3)), null, 2));
+
+        const batchTrust = new Map<string, TrustInfo>();
+        for (const pk of batch) {
+          const result = results[pk];
+          let distance: number | null = null;
+          let paths: number | null = null;
+          let score: number | null = null;
+
+          if (result !== null && result !== undefined) {
+            const resultData = result as { hops: number; paths: number; score: number };
+            distance = resultData.hops;
+            paths = resultData.paths;
+            score = resultData.score;
+          }
+
+          const trust: TrustInfo = {
+            distance,
+            paths,
+            score,
+            isLoading: false,
+          };
+          batchTrust.set(pk, trust);
+          newTrustData.set(pk, { distance, paths, score });
+        }
+
+        setFollowersTrust((prev) => {
+          const updated = new Map(prev);
+          batchTrust.forEach((trust, pk) => {
+            updated.set(pk, trust);
+          });
+          return updated;
+        });
+      } catch (err) {
+        console.warn(`[ProfilePageContent] Batch ${i / BATCH_SIZE} failed:`, err);
+        setFollowersTrust((prev) => {
+          const updated = new Map(prev);
+          for (const pk of batch) {
+            const existing = updated.get(pk);
+            if (existing?.isLoading) {
+              updated.set(pk, { ...existing, isLoading: false });
+            }
+          }
+          return updated;
+        });
       }
-    } catch {
-      // Ignore - keep using cached data without paths
+
+      if (i + BATCH_SIZE < pubkeysNeedingFetch.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    if (newTrustData.size > 0) {
+      cacheTrustBatch(newTrustData);
     }
   }, []);
 
-  // Fetch trust data for followers in batches when follows change
+  // Fetch trust data for initially visible followers when follows change
   useEffect(() => {
-    const fetchFollowersTrust = async () => {
-      if (!wotRef.current || follows.length === 0) return;
-
-      // First, load cached trust data and mark uncached as loading
-      const cachedTrust = getCachedTrustBatch(follows);
-      const initialMap = new Map<string, TrustInfo>();
-      const needsPathsRecheck: string[] = [];
-
-      for (const pk of follows) {
-        const cached = cachedTrust.get(pk);
-        if (cached) {
-          initialMap.set(pk, { ...cached, isLoading: false });
-          // Track cached entries that need paths recheck
-          if (cached.paths === null && cached.distance !== null) {
-            needsPathsRecheck.push(pk);
-          }
-        } else {
-          initialMap.set(pk, {
-            distance: null,
-            paths: null,
-            isLoading: true,
-          });
-        }
-      }
-      setFollowersTrust(initialMap);
-
-      // Recheck paths for cached entries that have paths: null (in background)
-      if (needsPathsRecheck.length > 0) {
-        recheckPaths(needsPathsRecheck);
-      }
-
-      // Filter to only pubkeys needing trust data
-      const pubkeysToFetch = getPubkeysNeedingTrust(follows);
-      if (pubkeysToFetch.length === 0) {
-        return; // All trust data is cached
-      }
-
-      const BATCH_SIZE = 50;
-      const newTrustData = new Map<string, TrustData>();
-
-      for (let i = 0; i < pubkeysToFetch.length; i += BATCH_SIZE) {
-        const batch = pubkeysToFetch.slice(i, i + BATCH_SIZE);
-
-        try {
-          // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
-          const results = await wotRef.current.getDistanceBatch(batch, true);
-
-          const batchTrust = new Map<string, TrustInfo>();
-          for (const pk of batch) {
-            const result = results[pk] as { hops: number; paths: number } | undefined;
-            const distance = result?.hops ?? null;
-            const paths = result?.paths ?? null;
-
-            // Only cache distance and paths - score calculated on the fly
-            const trust: TrustInfo = {
-              distance,
-              paths,
-              isLoading: false,
-            };
-            batchTrust.set(pk, trust);
-            newTrustData.set(pk, {
-              distance: trust.distance,
-              paths: trust.paths,
-            });
-          }
-
-          // Update UI with batch results
-          setFollowersTrust((prev) => {
-            const updated = new Map(prev);
-            batchTrust.forEach((trust, pk) => {
-              updated.set(pk, trust);
-            });
-            return updated;
-          });
-        } catch (err) {
-          console.warn(`[ProfilePageContent] Batch ${i / BATCH_SIZE} failed:`, err);
-          // Mark batch as done even on error
-          setFollowersTrust((prev) => {
-            const updated = new Map(prev);
-            for (const pk of batch) {
-              const existing = updated.get(pk);
-              if (existing?.isLoading) {
-                updated.set(pk, { ...existing, isLoading: false });
-              }
-            }
-            return updated;
-          });
-        }
-
-        // Small delay between batches
-        if (i + BATCH_SIZE < pubkeysToFetch.length) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-      }
-
-      // Cache all new trust data at the end
-      if (newTrustData.size > 0) {
-        cacheTrustBatch(newTrustData);
-      }
-    };
-
     if (isWotReady && follows.length > 0) {
-      fetchFollowersTrust();
+      // Only fetch for the first page of followers
+      const initialBatch = follows.slice(0, PAGE_SIZE);
+      fetchFollowersTrustBatch(initialBatch);
     }
-  }, [isWotReady, follows]);
+  }, [isWotReady, follows, fetchFollowersTrustBatch]);
+
+  // Reset pagination when pubkey changes
+  useEffect(() => {
+    setVisibleFollowersCount(PAGE_SIZE);
+    setFollowersTrust(new Map());
+  }, [pubkey]);
+
+  // Load more followers handler
+  const handleLoadMoreFollowers = useCallback(async () => {
+    if (isLoadingMoreFollowers) return;
+
+    setIsLoadingMoreFollowers(true);
+    const nextCount = visibleFollowersCount + PAGE_SIZE;
+    const newFollowers = follows.slice(visibleFollowersCount, nextCount);
+
+    await fetchFollowersTrustBatch(newFollowers);
+    setVisibleFollowersCount(nextCount);
+    setIsLoadingMoreFollowers(false);
+  }, [follows, visibleFollowersCount, fetchFollowersTrustBatch, isLoadingMoreFollowers]);
 
   // Fetch user data on mount or pubkey change
   useEffect(() => {
@@ -348,9 +282,9 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
   const displayName =
     profile?.displayName || profile?.name || formatPubkey(pubkey);
 
-  // Filter follows based on search (within sidebar)
+  // Filter follows based on search (within sidebar) and deduplicate
   const [followSearch, setFollowSearch] = useState("");
-  const filteredFollows = follows.filter((pk) => {
+  const filteredFollows = [...new Set(follows)].filter((pk) => {
     if (!followSearch) return true;
     const p = followProfiles.get(pk);
     const searchLower = followSearch.toLowerCase();
@@ -361,6 +295,33 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
       p?.nip05?.toLowerCase().includes(searchLower)
     );
   });
+
+  // Fetch trust data for visible followers that don't have it yet
+  // This handles the case when searching shows followers outside the initial batch
+  useEffect(() => {
+    if (!isWotReady || filteredFollows.length === 0) return;
+
+    // Get currently visible followers
+    const visibleFollowers = followSearch
+      ? filteredFollows
+      : filteredFollows.slice(0, visibleFollowersCount);
+
+    // Find followers without trust data (not in state)
+    const missingTrust = visibleFollowers.filter(
+      (pk) => !followersTrust.has(pk)
+    );
+
+    if (missingTrust.length > 0) {
+      fetchFollowersTrustBatch(missingTrust);
+    }
+  }, [
+    isWotReady,
+    filteredFollows,
+    followSearch,
+    visibleFollowersCount,
+    followersTrust,
+    fetchFollowersTrustBatch,
+  ]);
 
   if (error) {
     return (
@@ -572,14 +533,8 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                             {t("loadingTrust")}
                           </div>
                         ) : profileTrust ? (() => {
-                          // Calculate score on the fly using config
-                          const score = profileTrust.distance !== null
-                            ? calculateTrustScore(
-                                profileTrust.distance,
-                                profileTrust.paths ?? 1,
-                                scoringConfig ?? undefined
-                              )
-                            : null;
+                          // Use SDK-provided score directly
+                          const score = profileTrust.score;
                           return (
                           <div className="flex flex-wrap gap-4">
                             {/* Distance (hops) */}
@@ -757,17 +712,12 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                     </p>
                   ) : (
                     <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                      {filteredFollows.slice(0, 50).map((followPubkey) => {
+                      {/* When searching, show all matching results from loaded data; otherwise paginate */}
+                      {(followSearch ? filteredFollows : filteredFollows.slice(0, visibleFollowersCount)).map((followPubkey) => {
                         const p = followProfiles.get(followPubkey);
                         const trust = followersTrust.get(followPubkey);
-                        // Calculate score on the fly
-                        const score = trust?.distance !== null && trust?.distance !== undefined
-                          ? calculateTrustScore(
-                              trust.distance,
-                              trust.paths ?? 1,
-                              scoringConfig ?? undefined
-                            )
-                          : null;
+                        // Use SDK-provided score directly
+                        const score = trust?.score ?? null;
                         return (
                           <button
                             key={followPubkey}
@@ -798,7 +748,9 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                               )}
                             </div>
                             {/* Trust badge */}
-                            {trust && !trust.isLoading && trust.distance !== null && (
+                            {trust?.isLoading ? (
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                            ) : trust && trust.distance !== null ? (
                               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${
                                 score !== null && score >= 0.7
                                   ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
@@ -814,17 +766,36 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
                                   <span>·{Math.round(score * 100)}%</span>
                                 )}
                               </div>
-                            )}
-                            {trust?.isLoading && (
+                            ) : trust && trust.distance === null ? (
+                              // Not in WoT
+                              <div className="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                                —
+                              </div>
+                            ) : (
+                              // No trust data yet, show small loading
                               <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
                             )}
                           </button>
                         );
                       })}
-                      {filteredFollows.length > 50 && (
-                        <p className="p-3 text-xs text-gray-500 text-center">
-                          +{filteredFollows.length - 50} {t("more")}
-                        </p>
+                      {/* Load more button - only show when not searching and there are more to load */}
+                      {!followSearch && follows.length > visibleFollowersCount && (
+                        <button
+                          onClick={handleLoadMoreFollowers}
+                          disabled={isLoadingMoreFollowers}
+                          className="w-full p-3 text-sm text-primary hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-center gap-2"
+                        >
+                          {isLoadingMoreFollowers ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              {t("loading")}
+                            </>
+                          ) : (
+                            <>
+                              {t("loadMore")} ({follows.length - visibleFollowersCount} {t("more")})
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
                   )}

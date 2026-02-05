@@ -148,5 +148,12 @@
     "copyLink": "Copiar Link",
     "clickToExplore": "Clique para explorar",
     "clickToExploreDesc": "Clique em você para carregar seus seguidos"
+  },
+  "contextMenu": {
+    "expandFollows": "Expandir seguidos",
+    "alreadyExpanded": "Já expandido",
+    "maxDepthReached": "Profundidade máxima atingida",
+    "viewProfile": "Ver perfil",
+    "copyPubkey": "Copiar pubkey"
   }
 }

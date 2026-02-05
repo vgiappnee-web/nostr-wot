@@ -10,7 +10,6 @@ import {
   NodeProfile,
 } from "@/lib/graph/types";
 import { formatPubkey } from "@/lib/graph/transformers";
-import { calculateTrustScore } from "@/lib/graph/colors";
 import {
   getCachedProfiles,
   cacheProfiles,
@@ -61,12 +60,16 @@ export function useGraphData() {
   // Get user pubkey when WoT is ready
   useEffect(() => {
     const getPubkey = async () => {
+      console.log("[useGraphData] Checking WoT readiness - wot:", !!wot, "isReady:", isReady);
       if (wot && isReady) {
         try {
           const pubkey = await wot.getMyPubkey();
+          console.log("[useGraphData] SDK getMyPubkey response:", pubkey);
           if (pubkey) {
             setUserPubkey(pubkey);
             console.log("[useGraphData] Got user pubkey:", pubkey.slice(0, 8));
+          } else {
+            console.warn("[useGraphData] getMyPubkey returned null/undefined");
           }
         } catch (err) {
           console.error("[useGraphData] Failed to get pubkey:", err);
@@ -276,9 +279,9 @@ export function useGraphData() {
 
       try {
         // Get follows from extension
-        console.log("[expandNodeFollows] Fetching follows from extension...");
+        console.log("[expandNodeFollows] Fetching follows from extension for pubkey:", pubkey.slice(0, 8));
         const follows = await wotRef.current.getFollows(pubkey);
-        console.log("[expandNodeFollows] Got", follows?.length || 0, "follows");
+        console.log("[expandNodeFollows] SDK getFollows response - count:", follows?.length || 0, "first 3:", follows?.slice(0, 3).map(f => f.slice(0, 8)));
 
         if (!follows || follows.length === 0) {
           console.log("[expandNodeFollows] No follows found");
@@ -290,11 +293,8 @@ export function useGraphData() {
         const newPubkeys = follows.filter((pk: string) => !existingIds.has(pk));
 
         // Get trust data - first from cache, then from extension for uncached
-        // We only store distance and paths, score is calculated on the fly
-        const wotData = new Map<string, { distance: number; paths: number | null }>();
-
-        // Track pubkeys that need paths rechecked (cached with null paths)
-        const needsPathsRecheck: string[] = [];
+        // SDK now provides score directly, so we cache hops, paths, and score
+        const wotData = new Map<string, { distance: number; paths: number | null; score: number | null }>();
 
         if (newPubkeys.length > 0) {
           // Get cached trust data first
@@ -303,35 +303,48 @@ export function useGraphData() {
             wotData.set(pk, {
               distance: trust.distance ?? parentDistance + 1,
               paths: trust.paths,
+              score: trust.score,
             });
-            // Track cached entries that need paths recheck
-            if (trust.paths === null && trust.distance !== null) {
-              needsPathsRecheck.push(pk);
-            }
           });
 
-          // Fetch trust for uncached pubkeys using new getDistanceBatch with paths
+          // Fetch trust for uncached pubkeys - use getDistanceBatch with includePaths and includeScores
           const uncachedPubkeys = newPubkeys.filter((pk) => !cachedTrust.has(pk));
           if (uncachedPubkeys.length > 0) {
             try {
               console.log("[expandNodeFollows] Getting WoT data for", uncachedPubkeys.length, "pubkeys...");
-              // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
-              const batchResults = await wotRef.current.getDistanceBatch(uncachedPubkeys, true);
+              const batchResults = await wotRef.current.getDistanceBatch(uncachedPubkeys, { includePaths: true, includeScores: true });
+              console.log("[expandNodeFollows] SDK getDistanceBatch response (first 3):",
+                JSON.stringify(Object.fromEntries(Object.entries(batchResults).slice(0, 3)), null, 2));
+
               const newTrustData = new Map<string, TrustData>();
 
               for (const [pk, result] of Object.entries(batchResults)) {
-                // New API returns { hops: number, paths: number } when includePaths=true
-                const resultData = result as { hops: number; paths: number };
-                const distance = resultData.hops ?? parentDistance + 1;
-                const paths = resultData.paths ?? null;
-                wotData.set(pk, {
-                  distance,
-                  paths,
-                });
-                newTrustData.set(pk, {
-                  distance,
-                  paths,
-                });
+                // Expecting { hops, paths, score } | null from SDK
+                if (result === null) {
+                  // Not in WoT - use parent distance + 1 as fallback
+                  wotData.set(pk, {
+                    distance: parentDistance + 1,
+                    paths: null,
+                    score: null,
+                  });
+                  newTrustData.set(pk, {
+                    distance: parentDistance + 1,
+                    paths: null,
+                    score: null,
+                  });
+                } else {
+                  const resultData = result as { hops: number; paths: number; score: number };
+                  wotData.set(pk, {
+                    distance: resultData.hops,
+                    paths: resultData.paths,
+                    score: resultData.score,
+                  });
+                  newTrustData.set(pk, {
+                    distance: resultData.hops,
+                    paths: resultData.paths,
+                    score: resultData.score,
+                  });
+                }
               }
 
               // Cache the new trust data
@@ -351,8 +364,8 @@ export function useGraphData() {
           const extData = wotData.get(followPubkey);
           const distance = extData?.distance ?? parentDistance + 1;
           const pathCount = extData?.paths ?? 1;
-          // Always calculate score on the fly (no config here, uses defaults)
-          const trustScore = calculateTrustScore(distance, pathCount);
+          // Use SDK-provided score directly (defaults to 0 if not available)
+          const trustScore = extData?.score ?? 0;
 
           newLinks.push({
             source: pubkey,
@@ -372,7 +385,7 @@ export function useGraphData() {
                 formatPubkey(followPubkey),
               picture: cachedProfile?.picture,
               distance,
-              pathCount: 1,
+              pathCount,
               trustScore,
               isRoot: false,
               isMutual: false,
@@ -391,12 +404,6 @@ export function useGraphData() {
             }
           });
         }
-
-        // Recheck paths in background for old cached entries that have paths: null
-        // (only needed for entries cached before SDK upgrade)
-        if (needsPathsRecheck.length > 0 && wotRef.current) {
-          recheckPathsInBackground(needsPathsRecheck);
-        }
       } catch (err) {
         console.error("Failed to expand node:", err);
       } finally {
@@ -406,35 +413,6 @@ export function useGraphData() {
     },
     [expandNode, fetchProfiles, addProfiles, mergeData, setLoading, setError]
   );
-
-  /**
-   * Recheck paths in background for cached entries with null paths
-   * (only needed for entries cached before SDK upgrade)
-   */
-  const recheckPathsInBackground = useCallback(async (pubkeys: string[]) => {
-    if (!wotRef.current || pubkeys.length === 0) return;
-
-    // Use getDistanceBatch with includePaths=true to efficiently get paths for all pubkeys
-    try {
-      const results = await wotRef.current.getDistanceBatch(pubkeys, true);
-
-      for (const pk of pubkeys) {
-        const result = results[pk] as { hops: number; paths: number } | undefined;
-        if (result?.paths !== undefined) {
-          const cached = getCachedTrustBatch([pk]).get(pk);
-          if (cached) {
-            const updatedTrust: TrustData = {
-              distance: result.hops ?? cached.distance,
-              paths: result.paths,
-            };
-            cacheTrustBatch(new Map([[pk, updatedTrust]]));
-          }
-        }
-      }
-    } catch {
-      // Ignore - keep using cached data without paths
-    }
-  }, []);
 
   // Reset refs when user changes
   useEffect(() => {
