@@ -9,7 +9,7 @@ interface WotProviderProps {
 
 export function WotProvider({ children }: WotProviderProps) {
   return (
-    <SDKWoTProvider options={{ useExtension: true }}>
+    <SDKWoTProvider>
       {children}
     </SDKWoTProvider>
   );

@@ -310,26 +310,28 @@ export function useGraphData() {
             }
           });
 
-          // Fetch trust for uncached pubkeys
+          // Fetch trust for uncached pubkeys using new getDistanceBatch with paths
           const uncachedPubkeys = newPubkeys.filter((pk) => !cachedTrust.has(pk));
           if (uncachedPubkeys.length > 0) {
             try {
               console.log("[expandNodeFollows] Getting WoT data for", uncachedPubkeys.length, "pubkeys...");
-              const batchResults = await wotRef.current.batchCheck(uncachedPubkeys);
+              // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
+              const batchResults = await wotRef.current.getDistanceBatch(uncachedPubkeys, true);
               const newTrustData = new Map<string, TrustData>();
 
-              for (const [pk, result] of batchResults) {
-                const distance = result.distance ?? parentDistance + 1;
+              for (const [pk, result] of Object.entries(batchResults)) {
+                // New API returns { hops: number, paths: number } when includePaths=true
+                const resultData = result as { hops: number; paths: number };
+                const distance = resultData.hops ?? parentDistance + 1;
+                const paths = resultData.paths ?? null;
                 wotData.set(pk, {
                   distance,
-                  paths: null, // We don't fetch paths in expand to save time
+                  paths,
                 });
                 newTrustData.set(pk, {
                   distance,
-                  paths: null,
+                  paths,
                 });
-                // New entries also need paths recheck
-                needsPathsRecheck.push(pk);
               }
 
               // Cache the new trust data
@@ -337,7 +339,7 @@ export function useGraphData() {
                 cacheTrustBatch(newTrustData);
               }
             } catch (err) {
-              console.warn("[expandNodeFollows] Batch check failed:", err);
+              console.warn("[expandNodeFollows] getDistanceBatch failed:", err);
             }
           }
         }
@@ -390,7 +392,8 @@ export function useGraphData() {
           });
         }
 
-        // Recheck paths in background for entries that have paths: null
+        // Recheck paths in background for old cached entries that have paths: null
+        // (only needed for entries cached before SDK upgrade)
         if (needsPathsRecheck.length > 0 && wotRef.current) {
           recheckPathsInBackground(needsPathsRecheck);
         }
@@ -406,29 +409,30 @@ export function useGraphData() {
 
   /**
    * Recheck paths in background for cached entries with null paths
+   * (only needed for entries cached before SDK upgrade)
    */
   const recheckPathsInBackground = useCallback(async (pubkeys: string[]) => {
     if (!wotRef.current || pubkeys.length === 0) return;
 
-    for (const pk of pubkeys) {
-      try {
-        const details = await wotRef.current.getDetails(pk);
-        if (details?.paths !== undefined) {
+    // Use getDistanceBatch with includePaths=true to efficiently get paths for all pubkeys
+    try {
+      const results = await wotRef.current.getDistanceBatch(pubkeys, true);
+
+      for (const pk of pubkeys) {
+        const result = results[pk] as { hops: number; paths: number } | undefined;
+        if (result?.paths !== undefined) {
           const cached = getCachedTrustBatch([pk]).get(pk);
           if (cached) {
             const updatedTrust: TrustData = {
-              ...cached,
-              paths: details.paths,
+              distance: result.hops ?? cached.distance,
+              paths: result.paths,
             };
             cacheTrustBatch(new Map([[pk, updatedTrust]]));
           }
         }
-      } catch {
-        // Ignore - keep using cached data without paths
       }
-
-      // Small delay to avoid overwhelming the extension
-      await new Promise((resolve) => setTimeout(resolve, 50));
+    } catch {
+      // Ignore - keep using cached data without paths
     }
   }, []);
 

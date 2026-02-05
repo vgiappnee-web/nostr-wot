@@ -78,18 +78,24 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
 
   // Get scoring config from SDK when ready
   useEffect(() => {
-    if (!wotRef.current || !isWotReady) return;
+    const fetchConfig = async () => {
+      if (!wotRef.current || !isWotReady) return;
 
-    try {
-      // getScoringConfig is a sync method on the WoT instance
-      const config = wotRef.current.getScoringConfig();
-      const parsed = parseConfigToScoringConfig(config);
-      if (parsed) {
-        setScoringConfig(parsed);
+      try {
+        // getExtensionConfig returns the extension config including scoring
+        const extensionConfig = await wotRef.current.getExtensionConfig();
+        if (extensionConfig?.scoring) {
+          const parsed = parseConfigToScoringConfig(extensionConfig.scoring);
+          if (parsed) {
+            setScoringConfig(parsed);
+          }
+        }
+      } catch (err) {
+        console.warn("[ProfilePageContent] Failed to get scoring config:", err);
       }
-    } catch (err) {
-      console.warn("[ProfilePageContent] Failed to get scoring config:", err);
-    }
+    };
+
+    fetchConfig();
   }, [isWotReady]);
 
   // Fetch trust data for profile when WoT is ready
@@ -102,14 +108,16 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
       if (cached) {
         setProfileTrust(cached);
 
-        // If paths is null, try to fetch it and update cache
+        // If paths is null, try to fetch it and update cache using getDistanceBatch
+        // (only needed for entries cached before SDK upgrade)
         if (cached.paths === null && cached.distance !== null) {
           try {
-            const details = await wotRef.current.getDetails(pubkey);
-            if (details?.paths !== undefined) {
+            const results = await wotRef.current.getDistanceBatch([pubkey], true);
+            const result = results[pubkey] as { hops: number; paths: number } | undefined;
+            if (result?.paths !== undefined) {
               const updatedTrust: TrustData = {
-                ...cached,
-                paths: details.paths,
+                distance: result.hops ?? cached.distance,
+                paths: result.paths,
               };
               cacheTrust(pubkey, updatedTrust);
               setProfileTrust(updatedTrust);
@@ -123,21 +131,13 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
 
       setIsLoadingTrust(true);
       try {
-        // Use batchCheck for distance
-        const results = await wotRef.current.batchCheck([pubkey]);
-        const result = results.get(pubkey);
+        // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
+        const results = await wotRef.current.getDistanceBatch([pubkey], true);
+        const result = results[pubkey] as { hops: number; paths: number } | undefined;
 
         if (result) {
-          const distance = result.distance ?? null;
-
-          // Use getDetails to get paths count
-          let paths: number | null = null;
-          try {
-            const details = await wotRef.current.getDetails(pubkey);
-            paths = details?.paths ?? null;
-          } catch {
-            // getDetails might fail, continue without paths
-          }
+          const distance = result.hops ?? null;
+          const paths = result.paths ?? null;
 
           // Only cache distance and paths - score calculated on the fly
           const trustData: TrustData = {
@@ -162,18 +162,22 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
   }, [isWotReady, pubkey]);
 
   // Helper to recheck paths for cached entries that have paths: null
+  // (only needed for entries cached before SDK upgrade)
   const recheckPaths = useCallback(async (pubkeys: string[]) => {
     if (!wotRef.current || pubkeys.length === 0) return;
 
-    for (const pk of pubkeys) {
-      try {
-        const details = await wotRef.current.getDetails(pk);
-        if (details?.paths !== undefined) {
+    // Use getDistanceBatch with includePaths=true to efficiently get paths for all pubkeys
+    try {
+      const results = await wotRef.current.getDistanceBatch(pubkeys, true);
+
+      for (const pk of pubkeys) {
+        const result = results[pk] as { hops: number; paths: number } | undefined;
+        if (result?.paths !== undefined) {
           const cached = getCachedTrust(pk);
           if (cached) {
             const updatedTrust: TrustData = {
-              ...cached,
-              paths: details.paths,
+              distance: result.hops ?? cached.distance,
+              paths: result.paths,
             };
             cacheTrust(pk, updatedTrust);
 
@@ -182,18 +186,15 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
               const updated = new Map(prev);
               const existing = updated.get(pk);
               if (existing) {
-                updated.set(pk, { ...existing, paths: details.paths });
+                updated.set(pk, { ...existing, paths: result.paths });
               }
               return updated;
             });
           }
         }
-      } catch {
-        // Ignore - keep using cached data without paths
       }
-
-      // Small delay to avoid overwhelming the extension
-      await new Promise((resolve) => setTimeout(resolve, 50));
+    } catch {
+      // Ignore - keep using cached data without paths
     }
   }, []);
 
@@ -243,25 +244,14 @@ export default function ProfilePageContent({ pubkey }: ProfilePageContentProps) 
         const batch = pubkeysToFetch.slice(i, i + BATCH_SIZE);
 
         try {
-          // Get distance and score with batchCheck
-          const results = await wotRef.current.batchCheck(batch);
+          // Use getDistanceBatch with includePaths=true to get both hops and paths in one call
+          const results = await wotRef.current.getDistanceBatch(batch, true);
 
-          // For each result, also get paths with getDetails
           const batchTrust = new Map<string, TrustInfo>();
           for (const pk of batch) {
-            const result = results.get(pk);
-            const distance = result?.distance ?? null;
-            let paths: number | null = null;
-
-            // Only call getDetails if we have a valid distance
-            if (distance !== null) {
-              try {
-                const details = await wotRef.current.getDetails(pk);
-                paths = details?.paths ?? null;
-              } catch {
-                // Continue without paths
-              }
-            }
+            const result = results[pk] as { hops: number; paths: number } | undefined;
+            const distance = result?.hops ?? null;
+            const paths = result?.paths ?? null;
 
             // Only cache distance and paths - score calculated on the fly
             const trust: TrustInfo = {
