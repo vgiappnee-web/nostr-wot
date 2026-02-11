@@ -84,7 +84,7 @@ if (distance !== null && distance <= 2) {
       <CodeBlock
         language="javascript"
         code={`const response = await fetch(
-  \`https://wot-oracle.dtonon.com/distance?\` +
+  \`https://wot-oracle.mappingbitcoin.com/distance?\` +
   \`from=\${fromPubkey}&to=\${toPubkey}\`
 );
 const data = await response.json();
@@ -98,7 +98,7 @@ console.log(\`Mutual follow: \${data.mutual}\`);`}
 
       <TerminalBlock
         commands={[
-          'curl "https://wot-oracle.dtonon.com/distance?from=82341f...&to=3bf0c6..."',
+          'curl "https://wot-oracle.mappingbitcoin.com/distance?from=82341f...&to=3bf0c6..."',
         ]}
       />
 
@@ -108,14 +108,14 @@ console.log(\`Mutual follow: \${data.mutual}\`);`}
         For TypeScript projects, install our SDK for type-safe Oracle API access:
       </p>
 
-      <TerminalBlock commands={["npm install @anthropic/wot-sdk"]} />
+      <TerminalBlock commands={["npm install nostr-wot-sdk"]} />
 
       <CodeBlock
         language="typescript"
-        code={`import { WoTClient } from "@anthropic/wot-sdk";
+        code={`import { WoTClient } from "nostr-wot-sdk";
 
 const client = new WoTClient({
-  baseUrl: "https://wot-oracle.dtonon.com",
+  baseUrl: "https://wot-oracle.mappingbitcoin.com",
 });
 
 const result = await client.getDistance(fromPubkey, toPubkey);

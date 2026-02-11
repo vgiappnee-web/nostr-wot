@@ -61,7 +61,7 @@ export default async function OracleDocsPage() {
             <tbody>
               <tr>
                 <td className="p-3 border-t border-gray-200 dark:border-gray-700">Primary</td>
-                <td className="p-3 border-t border-gray-200 dark:border-gray-700"><code>https://wot-oracle.dtonon.com</code></td>
+                <td className="p-3 border-t border-gray-200 dark:border-gray-700"><code>https://wot-oracle.mappingbitcoin.com</code></td>
                 <td className="p-3 border-t border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">60 req/min</td>
               </tr>
             </tbody>
@@ -90,7 +90,7 @@ export default async function OracleDocsPage() {
 }`}
         />
         <h4 className="font-semibold mt-4 mb-2">Example</h4>
-        <TerminalBlock commands={['curl "https://wot-oracle.dtonon.com/health"']} />
+        <TerminalBlock commands={['curl "https://wot-oracle.mappingbitcoin.com/health"']} />
       </Endpoint>
 
       <Endpoint
@@ -140,7 +140,7 @@ export default async function OracleDocsPage() {
 }`}
         />
         <h4 className="font-semibold mt-4 mb-2">Example</h4>
-        <TerminalBlock commands={['curl "https://wot-oracle.dtonon.com/follows?pubkey=82341f..."']} />
+        <TerminalBlock commands={['curl "https://wot-oracle.mappingbitcoin.com/follows?pubkey=82341f..."']} />
       </Endpoint>
 
       <Endpoint
@@ -243,7 +243,7 @@ export default async function OracleDocsPage() {
 }`}
         />
         <h4 className="font-semibold mt-4 mb-2">Example</h4>
-        <TerminalBlock commands={['curl "https://wot-oracle.dtonon.com/distance?from=82341f...&to=3bf0c6..."']} />
+        <TerminalBlock commands={['curl "https://wot-oracle.mappingbitcoin.com/distance?from=82341f...&to=3bf0c6..."']} />
       </Endpoint>
 
       <Endpoint
@@ -288,7 +288,7 @@ export default async function OracleDocsPage() {
         <h4 className="font-semibold mb-2">Example</h4>
         <TerminalBlock
           commands={[
-            'curl -X POST "https://wot-oracle.dtonon.com/distance/batch" \\',
+            'curl -X POST "https://wot-oracle.mappingbitcoin.com/distance/batch" \\',
             '  -H "Content-Type: application/json" \\',
             '  -d \'{"from": "82341f...", "targets": ["3bf0c6...", "fa984b..."]}\''
           ]}

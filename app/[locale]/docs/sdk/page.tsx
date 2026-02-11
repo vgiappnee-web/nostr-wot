@@ -24,15 +24,15 @@ export default async function SDKDocsPage() {
       {/* Installation */}
       <section id="setup" className="scroll-mt-24">
         <h2>Installation</h2>
-        <TerminalBlock commands={["npm install @anthropic/wot-sdk"]} />
+        <TerminalBlock commands={["npm install nostr-wot-sdk"]} />
 
         <h3>Basic Setup</h3>
         <CodeBlock
           language="typescript"
-          code={`import { WoTClient } from "@anthropic/wot-sdk";
+          code={`import { WoTClient } from "nostr-wot-sdk";
 
 const client = new WoTClient({
-  baseUrl: "https://wot-oracle.dtonon.com",
+  baseUrl: "https://wot-oracle.mappingbitcoin.com",
   timeout: 5000,
   retries: 3,
 });`}
@@ -180,7 +180,7 @@ if (!healthy) {
         <CodeBlock
           language="typescript"
           code={`const publicOracle = new WoTClient({
-  baseUrl: "https://wot-oracle.dtonon.com",
+  baseUrl: "https://wot-oracle.mappingbitcoin.com",
 });
 
 const privateOracle = new WoTClient({
@@ -194,7 +194,7 @@ const privateOracle = new WoTClient({
         <CodeBlock
           language="typescript"
           code={`const client = new WoTClient({
-  baseUrl: "https://wot-oracle.dtonon.com",
+  baseUrl: "https://wot-oracle.mappingbitcoin.com",
   fetch: customFetch,
 });`}
         />
@@ -207,7 +207,7 @@ const privateOracle = new WoTClient({
         <p>The SDK throws typed errors for different failure scenarios:</p>
         <CodeBlock
           language="typescript"
-          code={`import { WoTError, WoTValidationError, WoTNetworkError } from "@anthropic/wot-sdk";
+          code={`import { WoTError, WoTValidationError, WoTNetworkError } from "nostr-wot-sdk";
 
 try {
   const result = await client.getDistance(from, to);
@@ -249,11 +249,11 @@ try {
         <h3>Provider Setup</h3>
         <CodeBlock
           language="tsx"
-          code={`import { WoTProvider } from "@anthropic/wot-sdk/react";
+          code={`import { WoTProvider } from "nostr-wot-sdk/react";
 
 function App() {
   return (
-    <WoTProvider baseUrl="https://wot-oracle.dtonon.com">
+    <WoTProvider baseUrl="https://wot-oracle.mappingbitcoin.com">
       <MyApp />
     </WoTProvider>
   );
@@ -263,7 +263,7 @@ function App() {
         <h3><InlineCode>useDistance</InlineCode></h3>
         <CodeBlock
           language="tsx"
-          code={`import { useDistance } from "@anthropic/wot-sdk/react";
+          code={`import { useDistance } from "nostr-wot-sdk/react";
 
 function TrustBadge({ from, to }: { from: string; to: string }) {
   const { distance, loading, error } = useDistance(from, to);
@@ -279,7 +279,7 @@ function TrustBadge({ from, to }: { from: string; to: string }) {
         <h3><InlineCode>useIsInWoT</InlineCode></h3>
         <CodeBlock
           language="tsx"
-          code={`import { useIsInWoT } from "@anthropic/wot-sdk/react";
+          code={`import { useIsInWoT } from "nostr-wot-sdk/react";
 
 function TrustedIndicator({ from, to }: { from: string; to: string }) {
   const { trusted, loading } = useIsInWoT(from, to, 2);
@@ -292,7 +292,7 @@ function TrustedIndicator({ from, to }: { from: string; to: string }) {
         <h3><InlineCode>useWoTClient</InlineCode></h3>
         <CodeBlock
           language="tsx"
-          code={`import { useWoTClient } from "@anthropic/wot-sdk/react";
+          code={`import { useWoTClient } from "nostr-wot-sdk/react";
 
 function MyComponent() {
   const client = useWoTClient();
