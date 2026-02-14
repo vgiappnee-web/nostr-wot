@@ -3,11 +3,16 @@ import path from 'path';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
 import { locales, defaultLocale, type Locale } from '@/i18n/config';
+import blogCache from '@/lib/generated/blog-cache.json';
 
-const CONTENT_DIR = path.join(process.cwd(), 'content/blog');
+// Use cache in production, filesystem in development for hot reloading
+const USE_CACHE = process.env.NODE_ENV === 'production';
+
+const CONTENT_DIR = path.join(process.cwd(), 'content', 'blog');
 
 function getBlogDir(locale: Locale = defaultLocale): string {
-  return path.join(CONTENT_DIR, locale);
+  const dir = path.join(CONTENT_DIR, locale);
+  return dir;
 }
 
 export interface AuthorSocials {
@@ -52,6 +57,11 @@ export interface BlogPost extends BlogPostMeta {
  * Get all blog post slugs for a locale
  */
 export function getBlogSlugs(locale: Locale = defaultLocale): string[] {
+  if (USE_CACHE) {
+    const localeData = (blogCache.locales as Record<string, { posts: BlogPost[]; tags: string[] }>)[locale];
+    return localeData?.posts.map(p => p.slug) || [];
+  }
+
   const blogDir = getBlogDir(locale);
   if (!fs.existsSync(blogDir)) {
     return [];
@@ -121,6 +131,18 @@ function getTranslationMap(): Map<string, Partial<Record<Locale, string>>> {
  * Get translations for a specific translationKey
  */
 export function getTranslations(translationKey: string): Partial<Record<Locale, string>> {
+  if (USE_CACHE) {
+    // In production, extract translations from the cached posts
+    for (const locale of locales) {
+      const localeData = (blogCache.locales as Record<string, { posts: BlogPost[]; tags: string[] }>)[locale];
+      const post = localeData?.posts.find(p => p.translationKey === translationKey);
+      if (post?.translations) {
+        return post.translations as Partial<Record<Locale, string>>;
+      }
+    }
+    return {};
+  }
+
   const map = getTranslationMap();
   return map.get(translationKey) || {};
 }
@@ -137,6 +159,12 @@ export function getAvailableLocales(translationKey: string): Locale[] {
  * Get a single blog post by slug and locale
  */
 export function getBlogPost(slug: string, locale: Locale = defaultLocale): BlogPost | null {
+  if (USE_CACHE) {
+    const localeData = (blogCache.locales as Record<string, { posts: BlogPost[]; tags: string[] }>)[locale];
+    const post = localeData?.posts.find(p => p.slug === slug);
+    return post || null;
+  }
+
   const blogDir = getBlogDir(locale);
   const mdxPath = path.join(blogDir, `${slug}.mdx`);
   const mdPath = path.join(blogDir, `${slug}.md`);
@@ -194,6 +222,13 @@ export function getBlogPost(slug: string, locale: Locale = defaultLocale): BlogP
  * Get all published blog posts sorted by date for a locale
  */
 export function getAllBlogPosts(locale: Locale = defaultLocale): BlogPostMeta[] {
+  if (USE_CACHE) {
+    const localeData = (blogCache.locales as Record<string, { posts: BlogPost[]; tags: string[] }>)[locale];
+    if (!localeData) return [];
+    // Posts are already filtered for published and sorted by date in cache
+    return localeData.posts.map(({ content: _, ...meta }) => meta);
+  }
+
   const slugs = getBlogSlugs(locale);
 
   const posts = slugs
@@ -224,6 +259,11 @@ export function getPostsByTag(tag: string, locale: Locale = defaultLocale): Blog
  * Get all unique tags for a locale
  */
 export function getAllTags(locale: Locale = defaultLocale): string[] {
+  if (USE_CACHE) {
+    const localeData = (blogCache.locales as Record<string, { posts: BlogPost[]; tags: string[] }>)[locale];
+    return localeData?.tags || [];
+  }
+
   const posts = getAllBlogPosts(locale);
   const tags = new Set<string>();
 
