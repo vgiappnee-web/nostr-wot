@@ -53,6 +53,7 @@ export {
   UserAddIcon,
   ExternalLinkIcon,
   CloseIcon,
+  ArrowLeftIcon,
 } from "./UIIcons";
 
 // Illustrations

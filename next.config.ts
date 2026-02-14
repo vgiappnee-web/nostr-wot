@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
               // Fonts: self, Google Fonts
               "font-src 'self' https://fonts.gstatic.com",
               // Connect: self, WebSocket relays, Google reCAPTCHA, analytics, WoT Oracle
-              "connect-src 'self' wss: https://www.google.com/recaptcha/ https://*.google-analytics.com https://*.analytics.google.com https://wot-oracle.mappingbitcoin.com",
+              "connect-src 'self' wss: wss://relay.damus.io wss://relay.nostr.band wss://nos.lol wss://relay.snort.social wss://purplepag.es wss://relay.primal.net https://www.google.com https://www.google.com/recaptcha/ https://www.gstatic.com https://*.google-analytics.com https://*.analytics.google.com https://region1.google-analytics.com https://wot-oracle.mappingbitcoin.com",
               // Frames: Google reCAPTCHA
               "frame-src 'self' https://www.google.com/recaptcha/ https://recaptcha.google.com/",
               // Base URI restriction

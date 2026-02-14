@@ -1,0 +1,26 @@
+{
+  "meta": {
+    "title": "Blog",
+    "description": "News, updates, and insights about Web of Trust on Nostr. Stay informed about the latest features, integrations, and community highlights."
+  },
+  "title": "Blog",
+  "subtitle": "News, updates, and insights about Web of Trust on Nostr",
+  "featured": "Featured",
+  "latestPosts": "Latest Posts",
+  "backToBlog": "Back to Blog",
+  "writtenBy": "Written by",
+  "viewOnNostr": "View on Nostr →",
+  "relatedPosts": "Related Posts",
+  "emptyState": {
+    "title": "No posts yet",
+    "description": "Check back soon for news and updates!"
+  },
+  "sidebar": {
+    "search": "Search",
+    "searchPlaceholder": "Search posts...",
+    "tags": "Tags",
+    "relatedPosts": "Related Posts",
+    "followUs": "Follow the Author",
+    "followDescription": "Stay connected for updates and insights."
+  }
+}

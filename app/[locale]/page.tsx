@@ -31,6 +31,7 @@ import {
 import { CodeBlock } from "@/components/ui";
 import { generateAlternates } from "@/lib/metadata";
 import { type Locale } from "@/i18n/config";
+import {NewsletterSection} from "@/components/layout/NewsletterSection";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -495,13 +496,7 @@ const inNetwork = await wot.isInMyWoT(pubkey);`}
           </div>
 
           <ScrollReveal animation="fade-up" delay={300}>
-            <div className="mt-20 pt-12 border-t border-gray-200 dark:border-gray-800">
-              <div className="text-center max-w-xl mx-auto">
-                <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">{t("newsletter.title")}</h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">{t("newsletter.description")}</p>
-                <NewsletterForm />
-              </div>
-            </div>
+            <NewsletterSection />
           </ScrollReveal>
         </div>
       </section>

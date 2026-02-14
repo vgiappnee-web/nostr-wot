@@ -1,0 +1,92 @@
+---
+title: "Introducing Nostr Web of Trust"
+description: "Learn how Web of Trust brings trust-based filtering to the Nostr ecosystem, helping you separate signal from noise."
+excerpt: "The Nostr ecosystem is growing rapidly, but with growth comes noise. Web of Trust provides a decentralized solution for trust-based content filtering, powered by your social graph."
+date: "2026-02-14"
+author:
+  name: "Leon Acosta"
+  avatar: "/authors/leon-profile.jpg"
+  npub: "npub1gxdhmu9swqduwhr6zptjy4ya693zp3ql28nemy4hd97kuufyrqdqwe5zfk"
+  socials:
+    linkedin: "leonacosta"
+    instagram: "leonacosta.now"
+    twitter: "leonacosta_"
+    github: "leonacostaok"
+featuredImage: "/images/blog/introducing-wot/featured.svg"
+previewImage: "/images/blog/introducing-wot/preview.svg"
+tags:
+  - "Announcement"
+  - "Web of Trust"
+  - "Nostr"
+published: true
+seoTitle: "Introducing Nostr Web of Trust - Trust-Based Filtering for Nostr"
+seoDescription: "Discover how Nostr Web of Trust helps you filter content based on your social connections. Open-source, privacy-focused, and decentralized."
+ogImage: "/images/blog/introducing-wot/og.svg"
+---
+
+The Nostr ecosystem is growing rapidly. Every day, thousands of new users join the network, creating notes, sharing content, and building connections. But with this growth comes a familiar challenge: **how do you separate signal from noise?**
+
+## The Problem with Open Networks
+
+Open, permissionless networks are powerful precisely because anyone can participate. But this openness also means dealing with:
+
+- **Spam and bot accounts** flooding your feed
+- **Impersonators** pretending to be someone they're not
+- **Low-quality content** drowning out valuable discussions
+
+Traditional solutions rely on centralized moderation—a team deciding what's acceptable. But that defeats the purpose of a decentralized network.
+
+## Enter Web of Trust
+
+Web of Trust takes a different approach. Instead of relying on a central authority, it leverages something you already have: **your social connections**.
+
+The concept is simple:
+
+1. **You trust the people you follow**
+2. **They trust the people they follow**
+3. **Trust flows through these connections**
+
+If someone is 1 hop away (you follow them directly), they're highly trusted. 2 hops away (a friend of a friend), somewhat trusted. 3 or more hops? Probably noise.
+
+```javascript
+// Check if someone is in your Web of Trust
+const inNetwork = await window.nostr.wot.isInMyWoT(pubkey);
+
+// Get their exact distance
+const hops = await window.nostr.wot.getDistance(pubkey);
+
+// Get a trust score (0-1)
+const score = await window.nostr.wot.getTrustScore(pubkey);
+```
+
+## How It Works
+
+Our browser extension builds a local graph of your social connections. When you visit any Nostr app, it can query this graph to determine trust levels for any pubkey.
+
+<Callout type="tip">
+The extension works with any Nostr app that implements the WoT API. No changes needed to your favorite client!
+</Callout>
+
+### Privacy First
+
+We designed the system with privacy as a core principle:
+
+- **Local Mode**: Everything stays in your browser. Zero external requests.
+- **Remote Mode**: Only pubkey lookups—no content, no tracking.
+- **Hybrid Mode**: Best of both worlds with caching.
+
+## What's Next
+
+This is just the beginning. We're working on:
+
+- **SDK for developers** to integrate WoT into their apps
+- **Oracle server** for apps that can't run client-side computations
+- **Advanced scoring** with mutual follows and bridging bonuses
+
+## Get Started
+
+Ready to try it? [Download the extension](/download) and start filtering your Nostr experience based on real human connections.
+
+---
+
+*Have questions? Reach out on [Nostr](https://njump.me/npub1gxdhmu9swqduwhr6zptjy4ya693zp3ql28nemy4hd97kuufyrqdqwe5zfk) or check our [documentation](/docs).*

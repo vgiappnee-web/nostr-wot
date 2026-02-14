@@ -11,6 +11,7 @@ import terms from './terms.json';
 import docs from './docs.json';
 import playground from './playground.json';
 import profile from './profile.json';
+import blog from './blog.json';
 
 const messages = {
   common,
@@ -26,6 +27,7 @@ const messages = {
   docs,
   playground,
   profile,
+  blog,
 };
 
 export default messages;

@@ -1,9 +1,10 @@
 import { MetadataRoute } from "next";
-import { locales, defaultLocale } from "@/i18n/config";
+import { locales } from "@/i18n/config";
+import { getAllBlogPosts } from "@/lib/blog";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://nostr-wot.com";
 
-// Define all routes with their change frequency and priority
+// Define all static routes with their change frequency and priority
 const routes: {
   path: string;
   changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
@@ -12,6 +13,7 @@ const routes: {
   { path: "", changeFrequency: "weekly", priority: 1.0 },
   { path: "/features", changeFrequency: "weekly", priority: 0.9 },
   { path: "/download", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/blog", changeFrequency: "daily", priority: 0.8 },
   { path: "/docs", changeFrequency: "weekly", priority: 0.8 },
   { path: "/oracle", changeFrequency: "monthly", priority: 0.7 },
   { path: "/about", changeFrequency: "monthly", priority: 0.6 },
@@ -24,11 +26,9 @@ const routes: {
 export default function sitemap(): MetadataRoute.Sitemap {
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
-  // Generate entries for each route in each locale
+  // Generate entries for each static route in each locale
   for (const route of routes) {
     for (const locale of locales) {
-      // For default locale, we can optionally skip the locale prefix
-      // but for consistency and SEO, we include it for all locales
       const url = `${BASE_URL}/${locale}${route.path}`;
 
       sitemapEntries.push({
@@ -39,6 +39,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
         alternates: {
           languages: Object.fromEntries(
             locales.map((l) => [l, `${BASE_URL}/${l}${route.path}`])
+          ),
+        },
+      });
+    }
+  }
+
+  // Generate entries for blog posts
+  const blogPosts = getAllBlogPosts();
+  for (const post of blogPosts) {
+    for (const locale of locales) {
+      const url = `${BASE_URL}/${locale}/blog/${post.slug}`;
+
+      sitemapEntries.push({
+        url,
+        lastModified: new Date(post.date),
+        changeFrequency: "monthly",
+        priority: 0.7,
+        alternates: {
+          languages: Object.fromEntries(
+            locales.map((l) => [l, `${BASE_URL}/${l}/blog/${post.slug}`])
           ),
         },
       });
