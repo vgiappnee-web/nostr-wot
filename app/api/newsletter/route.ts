@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     // Notification to admin
     const { error: notifyError } = await resend.emails.send({
-      from: "Nostr WoT <noreply@resend.dev>",
+      from: "Nostr WoT <noreply@nostr-wot.com>",
       to: contactEmail,
       subject: "[Newsletter] New Subscriber",
       html: `

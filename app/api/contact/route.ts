@@ -219,7 +219,7 @@ This message was sent from the Nostr WoT contact form.
     // Send email using Resend
     const resend = new Resend(resendApiKey);
     const { error } = await resend.emails.send({
-      from: "Nostr WoT <noreply@resend.dev>",
+      from: "Nostr WoT <noreply@nostr-wot.com>",
       to: contactEmail,
       replyTo: email,
       subject: `[${type.toUpperCase()}] ${subject}`,
