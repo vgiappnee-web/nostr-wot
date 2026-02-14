@@ -29,12 +29,20 @@ import {
   ChevronDownIcon,
 } from "@/components/icons";
 import { CodeBlock } from "@/components/ui";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("home.meta");
   return {
     title: t("title"),
     description: t("description"),
+    alternates: generateAlternates("/", locale as Locale),
     openGraph: {
       title: t("title"),
       description: t("description"),

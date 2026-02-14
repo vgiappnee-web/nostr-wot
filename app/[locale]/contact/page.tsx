@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import ContactContent from "./ContactContent";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("contact.meta");
   return {
     title: t("title"),
     description: t("description"),
+    alternates: generateAlternates("/contact", locale as Locale),
     openGraph: {
       title: t("title"),
       description: t("description"),

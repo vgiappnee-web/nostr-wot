@@ -9,10 +9,21 @@ import {
   ArrowDownIcon,
 } from "@/components/icons";
 import { ReactNode } from "react";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("about.meta");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: generateAlternates("/about", locale as Locale),
+  };
 }
 
 const HOP_NODES = [

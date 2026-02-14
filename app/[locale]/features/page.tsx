@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
@@ -26,6 +27,8 @@ import {
   AnimatedRocketIcon,
   CheckCircleIcon,
 } from "@/components/icons";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 import {
   TrustSpectrumVisualization,
   ScoringDetailsGrid,
@@ -33,6 +36,20 @@ import {
   FormulaDisplay,
   SettingsPreview,
 } from "@/components/features";
+
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("features.meta");
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: generateAlternates("/features", locale as Locale),
+  };
+}
 
 // Code examples
 const API_EXAMPLE = `// Check trust in any Nostr app

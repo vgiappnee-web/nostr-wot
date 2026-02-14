@@ -2,12 +2,20 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { CodeBlock, InlineCode } from "@/components/ui";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("docs");
   return {
     title: `Extension API | ${t("meta.title")}`,
     description: "Complete API reference for the Nostr Web of Trust browser extension. All methods for trust scoring and graph queries.",
+    alternates: generateAlternates("/docs/extension", locale as Locale),
   };
 }
 

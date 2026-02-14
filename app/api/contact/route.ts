@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     // Prepare email content with HTML escaping to prevent XSS
     const typeLabel = type === "support" ? "Support Request" : "Media Inquiry";
-    const contactEmail = process.env.CONTACT_EMAIL || "hello@example.com";
+    const contactEmail = process.env.CONTACT_EMAIL || "contact@nostr-wot.com";
 
     // Escape all user inputs for HTML context
     const safeName = escapeHtml(name);

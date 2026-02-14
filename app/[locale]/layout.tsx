@@ -10,7 +10,10 @@ import { WotProvider } from "@/components/providers/WotProvider";
 import { locales, type Locale } from "@/i18n/config";
 import "../globals.css";
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://nostr-wot.com';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: {
     default: "Nostr Web of Trust",
     template: "%s | Nostr WoT",

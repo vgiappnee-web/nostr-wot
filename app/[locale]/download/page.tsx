@@ -11,10 +11,21 @@ import {
   LockOutlineIcon,
   CodeOutlineIcon,
 } from "@/components/icons";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("download.meta");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: generateAlternates("/download", locale as Locale),
+  };
 }
 
 const CHROME_STORE_URL = "https://chromewebstore.google.com/detail/nostr-wot-extension/gfmefgdkmjpjinecjchlangpamhclhdo";

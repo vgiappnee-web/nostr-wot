@@ -2,10 +2,21 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Badge, LinkButton, ExternalLinkButton, Section, SectionHeader, StatCard } from "@/components/ui";
 import { ScrollReveal } from "@/components/ui";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("oracle.meta");
-  return { title: t("title"), description: t("description") };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: generateAlternates("/oracle", locale as Locale),
+  };
 }
 
 const PERFORMANCE_STATS = [

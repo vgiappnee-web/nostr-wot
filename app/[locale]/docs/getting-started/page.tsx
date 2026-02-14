@@ -2,12 +2,20 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { CodeBlock, TerminalBlock } from "@/components/ui";
+import { generateAlternates } from "@/lib/metadata";
+import { type Locale } from "@/i18n/config";
 
-export async function generateMetadata(): Promise<Metadata> {
+type Props = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("docs");
   return {
     title: `${t("quickStart.title")} | ${t("meta.title")}`,
     description: "Get started with Nostr Web of Trust in minutes. Quick start guide for browser extension and Oracle API.",
+    alternates: generateAlternates("/docs/getting-started", locale as Locale),
   };
 }
 
