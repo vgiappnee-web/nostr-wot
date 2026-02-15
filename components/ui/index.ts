@@ -41,3 +41,5 @@ export { ThemeToggle } from "./ThemeToggle";
 export { LanguageSwitcher } from "./LanguageSwitcher";
 
 export { NewsletterForm } from "./NewsletterForm";
+
+export { WotGraphIllustration } from "./WotGraphIllustration";

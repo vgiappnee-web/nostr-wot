@@ -87,6 +87,27 @@
     "curlComment": "# Consulta distancia social entre dos usuarios",
     "responseComment": "# Respuesta"
   },
+  "playground": {
+    "badge": "Demo Interactivo",
+    "title": "Prueba el Playground",
+    "description": "Explora tu grafo de Web of Trust de forma interactiva. Ve tus conexiones sociales, distancias de confianza y cómo funciona la extensión en tiempo real.",
+    "tryButton": "Abrir Playground",
+    "notice": {
+      "title": "Instalar desde Chrome Web Store",
+      "description": "La extensión ya está disponible en Chrome Web Store para una instalación fácil:",
+      "chromeStoreUrl": "https://chromewebstore.google.com/detail/nostr-wot-extension/gfmefgdkmjpjinecjchlangpamhclhdo",
+      "chromeStoreButton": "Instalar desde Chrome Web Store",
+      "alternativeTitle": "O instalar manualmente:",
+      "steps": {
+        "step1": "Clona el repositorio:",
+        "step2": "Ve a chrome://extensions en tu navegador",
+        "step3": "Habilita \"Modo desarrollador\" (botón arriba a la derecha)",
+        "step4": "Haz clic en \"Cargar descomprimida\"",
+        "step5": "Selecciona la carpeta nostr-wot-extension"
+      },
+      "note": "No requiere compilación - la extensión carga directamente desde el código fuente."
+    }
+  },
   "cta": {
     "title": "¿Listo para Comenzar?",
     "subtitle": "Explora nuestra documentación o sumérgete directamente en el código.",

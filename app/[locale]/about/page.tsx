@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ScrollReveal, LinkButton, Section, SectionHeader } from "@/components/ui";
+import { ScrollReveal, LinkButton, Section, SectionHeader, CodeBlock, TerminalBlock, WotGraphIllustration } from "@/components/ui";
 import {
   ShieldIcon,
   BellIcon,
@@ -26,13 +26,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const HOP_NODES = [
-  { key: "you", label: "center", color: "bg-primary", value: null },
-  { key: "1", label: "following", color: "bg-trust-green", value: "1" },
-  { key: "2", label: "friendsOfFriends", color: "bg-trust-yellow", value: "2" },
-  { key: "3+", label: "likelyNoise", color: "bg-trust-red", value: "3+" },
-];
-
 const WHY_WORKS_CARDS = ["oneHop", "twoHop", "threeHop"];
 
 const USE_CASES: Array<{ key: string; Icon: (props: { className?: string }) => ReactNode }> = [
@@ -43,13 +36,29 @@ const USE_CASES: Array<{ key: string; Icon: (props: { className?: string }) => R
 ];
 
 const ARCHITECTURE_BLOCKS = [
-  { key: "yourApp", color: "blue", width: "max-w-md" },
-  { key: "extension", color: "purple", width: "max-w-md" },
+  {
+    key: "yourApp",
+    width: "max-w-md",
+    classes: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+  },
+  {
+    key: "extension",
+    width: "max-w-md",
+    classes: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
+  },
 ];
 
 const ARCHITECTURE_OPTIONS = [
-  { key: "localIndex", color: "green", width: "w-48" },
-  { key: "oracle", color: "orange", width: "w-48" },
+  {
+    key: "localIndex",
+    width: "w-48",
+    classes: "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+  },
+  {
+    key: "oracle",
+    width: "w-48",
+    classes: "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800"
+  },
 ];
 
 export default async function AboutPage() {
@@ -99,20 +108,10 @@ export default async function AboutPage() {
           </p>
         </ScrollReveal>
 
-        {/* Hops Visualization */}
-        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-12">
-          {HOP_NODES.map((node, i) => (
-            <ScrollReveal key={node.key} animation="zoom-in" delay={i * 100}>
-              <div className="flex flex-col items-center">
-                {i > 0 && <div className="w-8 h-0.5 bg-gray-300 dark:bg-gray-700 hidden sm:block absolute -left-6" />}
-                <div className={`w-16 h-16 rounded-full ${node.color} text-white flex items-center justify-center font-bold text-lg ${node.key === "you" ? "animate-pulse-glow" : ""}`}>
-                  {node.value || t(`hops.${node.key}`)}
-                </div>
-                <span className="text-sm text-gray-500 mt-2">{t(`hops.${node.label}`)}</span>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
+        {/* Animated Web of Trust Graph */}
+        <ScrollReveal animation="zoom-in">
+          <WotGraphIllustration className="mb-12" />
+        </ScrollReveal>
 
         <ScrollReveal animation="fade-up" delay={400}>
           <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-8">
@@ -138,7 +137,7 @@ export default async function AboutPage() {
           {ARCHITECTURE_BLOCKS.map((block, i) => (
             <ScrollReveal key={block.key} animation={i === 0 ? "fade-down" : "fade-up"} delay={i * 200}>
               <div className="flex justify-center">
-                <div className={`bg-${block.color}-50 dark:bg-${block.color}-900/20 border border-${block.color}-200 dark:border-${block.color}-800 rounded-lg p-4 text-center ${block.width} w-full card-interactive`}>
+                <div className={`${block.classes} border rounded-lg p-4 text-center ${block.width} w-full card-interactive`}>
                   <strong className="block text-gray-900 dark:text-white">{t(`architecture.${block.key}.title`)}</strong>
                   <span className="text-sm text-gray-500 dark:text-gray-400">{t(`architecture.${block.key}.description`)}</span>
                 </div>
@@ -162,16 +161,15 @@ export default async function AboutPage() {
           <ScrollReveal animation="fade-up" delay={400}>
             <div className="flex justify-center items-center gap-4 flex-wrap">
               {ARCHITECTURE_OPTIONS.map((option, i) => (
-                <>
+                <div key={option.key} className="contents">
                   {i > 0 && <span className="text-gray-400 font-medium">{t("architecture.or")}</span>}
                   <div
-                    key={option.key}
-                    className={`bg-${option.color}-50 dark:bg-${option.color}-900/20 border border-${option.color}-200 dark:border-${option.color}-800 rounded-lg p-4 text-center ${option.width} card-interactive`}
+                    className={`${option.classes} border rounded-lg p-4 text-center ${option.width} card-interactive`}
                   >
                     <strong className="block text-gray-900 dark:text-white">{t(`architecture.${option.key}.title`)}</strong>
                     <span className="text-sm text-gray-500 dark:text-gray-400">{t(`architecture.${option.key}.description`)}</span>
                   </div>
-                </>
+                </div>
               ))}
             </div>
           </ScrollReveal>
@@ -218,42 +216,93 @@ export default async function AboutPage() {
         </ScrollReveal>
         <div className="grid md:grid-cols-2 gap-6">
           <ScrollReveal animation="fade-right" delay={100}>
-            <div className="bg-gray-900 dark:bg-gray-800 rounded-xl overflow-hidden card-interactive">
-              <div className="bg-gray-800 dark:bg-gray-700 px-4 py-2 text-sm text-gray-400">{t("codeExamples.javascript")}</div>
-              <pre className="p-4 text-sm overflow-x-auto">
-                <code className="text-gray-100">{`// Check if someone is in your web of trust
+            <CodeBlock
+              language="javascript"
+              code={`// Check if someone is in your web of trust
 if (window.nostr?.wot) {
   const distance = await window.nostr.wot.getDistance(pubkey);
 
   if (distance !== null && distance <= 2) {
     console.log("Trusted! " + distance + " hops away");
   }
-}`}</code>
-              </pre>
-            </div>
+}`}
+            />
           </ScrollReveal>
           <ScrollReveal animation="fade-left" delay={200}>
-            <div className="bg-gray-900 dark:bg-gray-800 rounded-xl overflow-hidden card-interactive">
-              <div className="bg-gray-800 dark:bg-gray-700 px-4 py-2 text-sm text-gray-400">{t("codeExamples.restApi")}</div>
-              <pre className="p-4 text-sm overflow-x-auto">
-                <code className="text-gray-100">{`# Query social distance between two users
-curl "https://wot-oracle.example.com/distance?\\
-from=PUBKEY1&to=PUBKEY2"
+            <TerminalBlock
+              commands={[
+                "# Query social distance between two users",
+                'curl "https://wot-oracle.mappingbitcoin.com/distance?from=PUBKEY1&to=PUBKEY2"',
+                "",
+                "# Response",
+                '{ "distance": 2, "paths": 5, "mutual": false }',
+              ]}
+            />
+          </ScrollReveal>
+        </div>
+      </Section>
 
-# Response
-{
-  "distance": 2,
-  "paths": 5,
-  "mutual": false
-}`}</code>
-              </pre>
+      {/* Playground Section */}
+      <Section padding="md" className="overflow-hidden">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <ScrollReveal animation="fade-right" className="order-2 lg:order-1">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-amber-500/20 rounded-3xl blur-3xl" />
+              <div className="relative bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/40 dark:to-amber-900/40 rounded-3xl p-8 border border-orange-200 dark:border-orange-800">
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <div className="space-y-3 text-sm font-mono">
+                    <p className="text-gray-500 dark:text-gray-400"># {t("playground.notice.steps.step1")}</p>
+                    <p className="text-gray-900 dark:text-white">git clone https://github.com/nostr-wot/nostr-wot-extension.git</p>
+                    <p className="text-gray-500 dark:text-gray-400 mt-4"># {t("playground.notice.steps.step2")}</p>
+                    <p className="text-gray-500 dark:text-gray-400"># {t("playground.notice.steps.step3")}</p>
+                    <p className="text-gray-500 dark:text-gray-400"># {t("playground.notice.steps.step4")}</p>
+                    <p className="text-gray-500 dark:text-gray-400"># {t("playground.notice.steps.step5")}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-4 text-center font-medium">{t("playground.notice.alternativeTitle")}</p>
+                <p className="text-sm text-orange-700 dark:text-orange-300 mt-2 text-center">{t("playground.notice.note")}</p>
+              </div>
+            </div>
+          </ScrollReveal>
+          <ScrollReveal animation="fade-left" delay={200} className="order-1 lg:order-2">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-3 py-1 rounded-full text-sm font-medium mb-6">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {t("playground.badge")}
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("playground.title")}</h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">{t("playground.description")}</p>
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-8">
+                <h3 className="font-semibold text-green-800 dark:text-green-200 mb-2">{t("playground.notice.title")}</h3>
+                <p className="text-sm text-green-700 dark:text-green-300 mb-3">{t("playground.notice.description")}</p>
+                <a
+                  href={t("playground.notice.chromeStoreUrl")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {t("playground.notice.chromeStoreButton")}
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+              <LinkButton href="/playground" className="hover-lift">{t("playground.tryButton")}</LinkButton>
             </div>
           </ScrollReveal>
         </div>
       </Section>
 
       {/* CTA Section */}
-      <Section padding="md">
+      <Section background="gray" padding="md">
         <ScrollReveal animation="zoom-in">
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-4">{t("cta.title")}</h2>
