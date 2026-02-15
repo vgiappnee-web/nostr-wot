@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { GraphNode } from "@/lib/graph/types";
+import { formatPubkey } from "@/lib/graph/transformers";
 
 interface NodeContextMenuProps {
   node: GraphNode;
@@ -54,17 +55,19 @@ export default function NodeContextMenu({
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden min-w-[200px]"
+      className="absolute z-50 bg-gray-800 border border-gray-700 rounded-lg shadow-xl overflow-hidden min-w-[200px] animate-in fade-in zoom-in-95 duration-150"
       style={{
         left: position.x,
         top: position.y,
-        transform: "translate(-50%, 8px)",
       }}
     >
       {/* Node info header */}
       <div className="px-4 py-3 border-b border-gray-700 bg-gray-800/80">
         <div className="font-medium text-white truncate max-w-[180px]">
-          {node.label || node.id.slice(0, 16)}
+          {node.label || formatPubkey(node.id)}
+        </div>
+        <div className="text-xs text-gray-500 font-mono truncate max-w-[180px] mt-0.5">
+          {formatPubkey(node.id)}
         </div>
         <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
           <span>{node.distance} hop{node.distance !== 1 ? "s" : ""}</span>
@@ -165,10 +168,12 @@ export default function NodeContextMenu({
           <span>{t("contextMenu.viewProfile")}</span>
         </button>
 
-        {/* Copy pubkey */}
+        {/* Copy npub */}
         <button
           onClick={() => {
-            navigator.clipboard.writeText(node.id);
+            // Copy the npub format
+            const npub = node.id.startsWith("npub") ? node.id : formatPubkey(node.id).replace("...", "");
+            navigator.clipboard.writeText(node.id); // Copy full hex for compatibility
             onClose();
           }}
           className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-200 hover:bg-gray-700/50 transition-colors"
@@ -186,7 +191,7 @@ export default function NodeContextMenu({
               d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
           </svg>
-          <span>{t("contextMenu.copyPubkey")}</span>
+          <span>{t("contextMenu.copyNpub")}</span>
         </button>
       </div>
     </div>

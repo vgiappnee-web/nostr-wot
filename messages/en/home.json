@@ -9,8 +9,8 @@
     "titleHighlight": "Central Authority",
     "description": "Filter spam, verify reputation, and discover content through your social graph. No blocklists. No gatekeepers.",
     "builtFor": "Built for",
-    "downloadButton": "Download",
-    "docsButton": "View Documentation"
+    "playgroundButton": "Try Playground",
+    "downloadButton": "Download"
   },
   "stats": {
     "license": "MIT",

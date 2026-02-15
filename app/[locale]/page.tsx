@@ -225,8 +225,8 @@ export default async function Home() {
           </ScrollReveal>
           <ScrollReveal animation="fade-up" delay={400}>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <LinkButton href="/download" className="hover-lift">{t("hero.downloadButton")}</LinkButton>
-              <LinkButton href="/docs" variant="secondary" className="hover-lift">{t("hero.docsButton")}</LinkButton>
+              <LinkButton href="/playground" className="hover-lift">{t("hero.playgroundButton")}</LinkButton>
+              <LinkButton href="/download" variant="secondary" className="hover-lift">{t("hero.downloadButton")}</LinkButton>
             </div>
           </ScrollReveal>
           <ScrollReveal animation="fade-up" delay={500}>

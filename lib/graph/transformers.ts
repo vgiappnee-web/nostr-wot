@@ -285,11 +285,79 @@ export function calculateStats(data: GraphData): GraphStats {
 }
 
 /**
- * Format pubkey for display
+ * Convert hex pubkey to npub format (bech32)
+ */
+export function hexToNpub(hex: string): string {
+  // If already npub, return as-is
+  if (hex.startsWith("npub")) return hex;
+
+  try {
+    const ALPHABET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
+
+    // Convert hex to bytes
+    const bytes: number[] = [];
+    for (let i = 0; i < hex.length; i += 2) {
+      bytes.push(parseInt(hex.slice(i, i + 2), 16));
+    }
+
+    // Convert bytes to 5-bit groups
+    let acc = 0;
+    let bits = 0;
+    const values: number[] = [];
+
+    for (const byte of bytes) {
+      acc = (acc << 8) | byte;
+      bits += 8;
+      while (bits >= 5) {
+        bits -= 5;
+        values.push((acc >> bits) & 0x1f);
+      }
+    }
+    if (bits > 0) {
+      values.push((acc << (5 - bits)) & 0x1f);
+    }
+
+    // Calculate checksum (simplified polymod for npub)
+    const hrp = "npub";
+    const hrpExpand = [...hrp].map((c) => c.charCodeAt(0) >> 5)
+      .concat([0])
+      .concat([...hrp].map((c) => c.charCodeAt(0) & 31));
+
+    let chk = 1;
+    for (const v of hrpExpand.concat(values).concat([0, 0, 0, 0, 0, 0])) {
+      const b = chk >> 25;
+      chk = ((chk & 0x1ffffff) << 5) ^ v;
+      for (let i = 0; i < 5; i++) {
+        if ((b >> i) & 1) {
+          chk ^= [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3][i];
+        }
+      }
+    }
+    chk ^= 1;
+
+    const checksum: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      checksum.push((chk >> (5 * (5 - i))) & 31);
+    }
+
+    // Build npub string
+    const data = values.concat(checksum).map((v) => ALPHABET[v]).join("");
+    return `npub1${data}`;
+  } catch {
+    return hex;
+  }
+}
+
+/**
+ * Format pubkey for display (shows truncated npub)
  */
 export function formatPubkey(pubkey: string): string {
-  if (pubkey.length <= 16) return pubkey;
-  return `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`;
+  // Convert hex to npub if needed
+  const npub = pubkey.startsWith("npub") ? pubkey : hexToNpub(pubkey);
+
+  // Show truncated npub: npub1abc...xyz
+  if (npub.length <= 16) return npub;
+  return `${npub.slice(0, 10)}...${npub.slice(-6)}`;
 }
 
 /**

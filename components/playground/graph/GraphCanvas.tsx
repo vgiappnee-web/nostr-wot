@@ -8,6 +8,7 @@ import { useNodeSelection } from "@/hooks/useNodeSelection";
 import { useGraphData } from "@/hooks/useGraphData";
 import { GraphNode, GraphEdge } from "@/lib/graph/types";
 import { getTrustColorHex } from "@/lib/graph/colors";
+import { formatPubkey } from "@/lib/graph/transformers";
 import NodeContextMenu from "./NodeContextMenu";
 
 // Use 2D graph for much better performance (canvas-based, not WebGL meshes)
@@ -44,6 +45,8 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     node: GraphNode;
     position: { x: number; y: number };
   } | null>(null);
+  const [clickedNodeId, setClickedNodeId] = useState<string | null>(null);
+  const [clickAnimationPhase, setClickAnimationPhase] = useState(0);
 
   // Check if we should use static layout (no physics) for performance
   const useStaticLayout = filteredData.nodes.length > DISABLE_SIMULATION_THRESHOLD;
@@ -112,12 +115,18 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     }
   }, [filteredData.nodes.length]);
 
-  // Node click handler - shows context menu instead of auto-expanding
+  // Node click handler - opens sidebar AND shows context menu
   const handleNodeClick = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any, event: MouseEvent) => {
       const graphNode = node as GraphNode;
+
+      // Always select node to open sidebar
       select(graphNode);
+
+      // Trigger click animation
+      setClickedNodeId(graphNode.id);
+      setClickAnimationPhase(0);
 
       // Auto-expand only for root node (first click)
       if (graphNode.isRoot && filteredData.nodes.length === 1) {
@@ -126,28 +135,42 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
         return;
       }
 
-      // Show context menu for all other nodes
-      // Get container position to calculate relative position
+      // Show context menu next to cursor for all nodes
       const container = graphRef.current?.containerEl?.parentElement;
       if (container) {
         const rect = container.getBoundingClientRect();
+        // Position context menu at cursor, but keep it within bounds
+        const menuX = Math.min(event.clientX - rect.left, rect.width - 220);
+        const menuY = Math.min(event.clientY - rect.top, rect.height - 200);
+
         setContextMenu({
           node: graphNode,
           position: {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
+            x: Math.max(20, menuX),
+            y: Math.max(20, menuY),
           },
         });
-      }
-
-      // Center on node
-      if (graphRef.current) {
-        graphRef.current.centerAt(node.x, node.y, 500);
-        graphRef.current.zoom(2, 500);
       }
     },
     [select, expandNodeFollows, filteredData.nodes.length]
   );
+
+  // Animate clicked node with ripple effect
+  useEffect(() => {
+    if (clickedNodeId) {
+      const animationInterval = setInterval(() => {
+        setClickAnimationPhase((prev) => {
+          if (prev >= 1) {
+            clearInterval(animationInterval);
+            return 0;
+          }
+          return prev + 0.05;
+        });
+      }, 16); // ~60fps
+
+      return () => clearInterval(animationInterval);
+    }
+  }, [clickedNodeId]);
 
   // Handle expand from context menu
   const handleExpandFromMenu = useCallback(() => {
@@ -190,8 +213,41 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const graphNode = node as GraphNode;
-      const size = graphNode.isRoot ? 8 : 4;
+      const isSelected = clickedNodeId === graphNode.id;
+      const isHovered = activeNode?.id === graphNode.id;
+      const baseSize = graphNode.isRoot ? 8 : 4;
+      const size = isHovered ? baseSize * 1.3 : baseSize;
       const color = nodeColors.get(graphNode.id) || "#666";
+
+      // Draw click animation (expanding ring)
+      if (isSelected && clickAnimationPhase > 0 && clickAnimationPhase < 1) {
+        const ringRadius = size + 20 * clickAnimationPhase;
+        const ringOpacity = 0.6 * (1 - clickAnimationPhase);
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, ringRadius, 0, 2 * Math.PI);
+        ctx.strokeStyle = `rgba(99, 102, 241, ${ringOpacity})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Draw selection ring for selected node
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size + 3, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#6366f1";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // Draw glow for root or hovered
+      if (graphNode.isRoot || isHovered) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI);
+        ctx.fillStyle = graphNode.isRoot
+          ? "rgba(99, 102, 241, 0.3)"
+          : `${color}40`;
+        ctx.fill();
+      }
 
       // Draw node
       ctx.beginPath();
@@ -199,25 +255,27 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
       ctx.fillStyle = color;
       ctx.fill();
 
-      // Draw glow for root
-      if (graphNode.isRoot) {
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, size + 4, 0, 2 * Math.PI);
-        ctx.fillStyle = "rgba(99, 102, 241, 0.3)";
-        ctx.fill();
-      }
+      // Draw label - show name if available, even when zoomed out
+      const hasName = graphNode.label && !graphNode.label.startsWith("npub");
+      const showLabel = globalScale > 1.2 || hasName || isHovered || isSelected;
 
-      // Draw label only when zoomed in enough
-      if (globalScale > 1.5) {
-        const label = graphNode.label || graphNode.id.slice(0, 8);
-        ctx.font = `${10 / globalScale}px Sans-Serif`;
+      if (showLabel) {
+        const label = graphNode.label || formatPubkey(graphNode.id);
+        // Truncate long labels
+        const displayLabel = label.length > 12 ? label.slice(0, 10) + "..." : label;
+        const fontSize = Math.max(8, Math.min(12, 10 / globalScale));
+        ctx.font = `${fontSize}px Sans-Serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
+
+        // Add text shadow for better readability
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillText(displayLabel, node.x + 1, node.y + size + 3);
         ctx.fillStyle = "#fff";
-        ctx.fillText(label, node.x, node.y + size + 2);
+        ctx.fillText(displayLabel, node.x, node.y + size + 2);
       }
     },
-    [nodeColors]
+    [nodeColors, clickedNodeId, clickAnimationPhase, activeNode]
   );
 
   // Link color
@@ -333,7 +391,7 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
       {activeNode && (
         <div className="absolute bottom-4 left-4 bg-gray-800/90 backdrop-blur-sm rounded-lg px-4 py-3 max-w-xs">
           <div className="font-medium text-white truncate">
-            {activeNode.label || activeNode.id.slice(0, 16)}
+            {activeNode.label || formatPubkey(activeNode.id)}
           </div>
           <div className="text-xs text-gray-400 mt-1">
             <span>{activeNode.distance} hop{activeNode.distance !== 1 ? 's' : ''}</span>
@@ -343,7 +401,7 @@ export default function GraphCanvas({ width, height }: GraphCanvasProps) {
             <span className="text-trust-green">{Math.round(activeNode.trustScore * 100)}% trust</span>
           </div>
           <div className="text-xs text-gray-500 mt-1 font-mono truncate">
-            {activeNode.id.slice(0, 16)}...
+            {formatPubkey(activeNode.id)}
           </div>
         </div>
       )}

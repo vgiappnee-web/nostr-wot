@@ -6,6 +6,7 @@ import { useGraphFilters } from "@/hooks/useGraphFilters";
 import { useGraph } from "@/contexts/GraphContext";
 import { useNodeSelection } from "@/hooks/useNodeSelection";
 import { Input } from "@/components/ui";
+import { formatPubkey } from "@/lib/graph/transformers";
 
 export default function SearchBar() {
   const t = useTranslations("playground");
@@ -144,10 +145,10 @@ export default function SearchBar() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  {node.label}
+                  {node.label || formatPubkey(node.id)}
                 </p>
                 <p className="text-xs text-gray-500 font-mono truncate">
-                  {node.id.slice(0, 16)}...
+                  {formatPubkey(node.id)}
                 </p>
               </div>
               <span className="text-xs text-gray-400">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { GraphNode, NodeProfile } from "@/lib/graph/types";
@@ -21,12 +22,19 @@ export default function NodeDetailCard({
   onViewProfile,
 }: NodeDetailCardProps) {
   const t = useTranslations("playground");
+  const [copied, setCopied] = useState(false);
 
   const trustClass = getTrustClass(node.trustScore);
   const trustLabel = getTrustLabel(node.trustScore);
 
-  const handleCopyPubkey = () => {
-    navigator.clipboard.writeText(node.id);
+  const handleCopyPubkey = async () => {
+    try {
+      await navigator.clipboard.writeText(node.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
   };
 
   return (
@@ -59,26 +67,49 @@ export default function NodeDetailCard({
             <p className="text-sm text-primary truncate">{profile.nip05}</p>
           )}
 
-          {/* Pubkey */}
+          {/* Pubkey with copy feedback */}
           <button
             onClick={handleCopyPubkey}
-            className="flex items-center gap-1 text-xs text-gray-500 font-mono hover:text-gray-300 transition-colors mt-1"
-            title={t("graph.copyPubkey")}
+            className={`flex items-center gap-1.5 text-xs font-mono transition-colors mt-1 ${
+              copied ? "text-emerald-400" : "text-gray-500 hover:text-gray-300"
+            }`}
+            title={t("graph.copyNpub")}
           >
-            {formatPubkey(node.id)}
-            <svg
-              className="w-3 h-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+            {copied ? (
+              <>
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span>{t("graph.copied")}</span>
+              </>
+            ) : (
+              <>
+                {formatPubkey(node.id)}
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+              </>
+            )}
           </button>
         </div>
       </div>

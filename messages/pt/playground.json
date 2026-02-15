@@ -115,10 +115,11 @@
     "viewTimeline": "Linha do Tempo",
     "you": "Você",
     "mutual": "Mútuo",
-    "copyPubkey": "Copiar pubkey",
+    "copyNpub": "Copiar npub",
+    "copied": "Copiado!",
     "expandNode": "Expandir",
     "viewProfile": "Ver Perfil",
-    "viewFullProfile": "Ver Perfil Completo",
+    "viewFullProfile": "Ver Perfil",
     "quickView": "Visualização Rápida",
     "following": "Seguindo",
     "followers": "Seguidores",
@@ -154,6 +155,6 @@
     "alreadyExpanded": "Já expandido",
     "maxDepthReached": "Profundidade máxima atingida",
     "viewProfile": "Ver perfil",
-    "copyPubkey": "Copiar pubkey"
+    "copyNpub": "Copiar npub"
   }
 }

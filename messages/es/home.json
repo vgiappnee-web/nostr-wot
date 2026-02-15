@@ -9,8 +9,8 @@
     "titleHighlight": "Autoridad Central",
     "description": "Filtra spam, verifica reputación y descubre contenido a través de tu grafo social. Sin listas de bloqueo. Sin guardianes.",
     "builtFor": "Construido para",
-    "downloadButton": "Descargar",
-    "docsButton": "Ver Documentación"
+    "playgroundButton": "Probar Playground",
+    "downloadButton": "Descargar"
   },
   "stats": {
     "license": "MIT",
