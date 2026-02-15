@@ -1,0 +1,76 @@
+<svg width="800" height="450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#312e81;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+
+  <!-- Connection lines -->
+  <g stroke-width="1.5" opacity="0.6">
+    <!-- From center to hop 1 -->
+    <line x1="400" y1="200" x2="300" y2="130" stroke="#22c55e"/>
+    <line x1="400" y1="200" x2="500" y2="120" stroke="#22c55e"/>
+    <line x1="400" y1="200" x2="280" y2="240" stroke="#22c55e"/>
+    <line x1="400" y1="200" x2="520" y2="260" stroke="#22c55e"/>
+    <line x1="400" y1="200" x2="360" y2="300" stroke="#22c55e"/>
+
+    <!-- From hop 1 to hop 2 -->
+    <line x1="300" y1="130" x2="200" y2="80" stroke="#eab308"/>
+    <line x1="500" y1="120" x2="580" y2="70" stroke="#eab308"/>
+    <line x1="500" y1="120" x2="600" y2="150" stroke="#eab308"/>
+    <line x1="280" y1="240" x2="180" y2="280" stroke="#eab308"/>
+    <line x1="520" y1="260" x2="620" y2="240" stroke="#eab308"/>
+    <line x1="520" y1="260" x2="580" y2="320" stroke="#eab308"/>
+
+    <!-- From hop 2 to hop 3 -->
+    <line x1="200" y1="80" x2="120" y2="50" stroke="#ef4444"/>
+    <line x1="580" y1="70" x2="660" y2="40" stroke="#ef4444"/>
+    <line x1="180" y1="280" x2="100" y2="320" stroke="#ef4444"/>
+    <line x1="620" y1="240" x2="700" y2="220" stroke="#ef4444"/>
+  </g>
+
+  <!-- Hop 3 nodes (red) -->
+  <g filter="url(#glow)">
+    <circle cx="120" cy="50" r="6" fill="#ef4444"/>
+    <circle cx="660" cy="40" r="6" fill="#ef4444"/>
+    <circle cx="100" cy="320" r="6" fill="#ef4444"/>
+    <circle cx="700" cy="220" r="6" fill="#ef4444"/>
+  </g>
+
+  <!-- Hop 2 nodes (yellow) -->
+  <g filter="url(#glow)">
+    <circle cx="200" cy="80" r="9" fill="#eab308"/>
+    <circle cx="580" cy="70" r="9" fill="#eab308"/>
+    <circle cx="600" cy="150" r="9" fill="#eab308"/>
+    <circle cx="180" cy="280" r="9" fill="#eab308"/>
+    <circle cx="620" cy="240" r="9" fill="#eab308"/>
+    <circle cx="580" cy="320" r="9" fill="#eab308"/>
+  </g>
+
+  <!-- Hop 1 nodes (green) -->
+  <g filter="url(#glow)">
+    <circle cx="300" cy="130" r="12" fill="#22c55e"/>
+    <circle cx="500" cy="120" r="12" fill="#22c55e"/>
+    <circle cx="280" cy="240" r="12" fill="#22c55e"/>
+    <circle cx="520" cy="260" r="12" fill="#22c55e"/>
+    <circle cx="360" cy="300" r="12" fill="#22c55e"/>
+  </g>
+
+  <!-- Center node (blue) -->
+  <circle cx="400" cy="200" r="25" fill="rgba(99,102,241,0.3)" filter="url(#glow)"/>
+  <circle cx="400" cy="200" r="18" fill="#6366f1" filter="url(#glow)"/>
+
+  <!-- Text -->
+  <text x="400" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">Playground</text>
+</svg>

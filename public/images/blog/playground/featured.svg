@@ -1,0 +1,111 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#312e81;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+
+  <!-- Grid pattern -->
+  <g opacity="0.1">
+    <line x1="0" y1="100" x2="1200" y2="100" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="200" x2="1200" y2="200" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="300" x2="1200" y2="300" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="400" x2="1200" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="500" x2="1200" y2="500" stroke="white" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="800" y1="0" x2="800" y2="630" stroke="white" stroke-width="1"/>
+    <line x1="1000" y1="0" x2="1000" y2="630" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Connection lines -->
+  <g stroke-width="2" opacity="0.6">
+    <!-- From center (blue) to hop 1 (green) -->
+    <line x1="500" y1="280" x2="380" y2="180" stroke="#22c55e"/>
+    <line x1="500" y1="280" x2="620" y2="160" stroke="#22c55e"/>
+    <line x1="500" y1="280" x2="350" y2="320" stroke="#22c55e"/>
+    <line x1="500" y1="280" x2="640" y2="350" stroke="#22c55e"/>
+    <line x1="500" y1="280" x2="450" y2="420" stroke="#22c55e"/>
+
+    <!-- From hop 1 to hop 2 (yellow) -->
+    <line x1="380" y1="180" x2="280" y2="120" stroke="#eab308"/>
+    <line x1="380" y1="180" x2="320" y2="250" stroke="#eab308"/>
+    <line x1="620" y1="160" x2="720" y2="100" stroke="#eab308"/>
+    <line x1="620" y1="160" x2="750" y2="200" stroke="#eab308"/>
+    <line x1="350" y1="320" x2="240" y2="380" stroke="#eab308"/>
+    <line x1="640" y1="350" x2="760" y2="320" stroke="#eab308"/>
+    <line x1="640" y1="350" x2="700" y2="430" stroke="#eab308"/>
+    <line x1="450" y1="420" x2="380" y2="500" stroke="#eab308"/>
+
+    <!-- From hop 2 to hop 3 (red) -->
+    <line x1="280" y1="120" x2="180" y2="80" stroke="#ef4444"/>
+    <line x1="720" y1="100" x2="820" y2="60" stroke="#ef4444"/>
+    <line x1="750" y1="200" x2="860" y2="180" stroke="#ef4444"/>
+    <line x1="240" y1="380" x2="150" y2="420" stroke="#ef4444"/>
+    <line x1="760" y1="320" x2="870" y2="350" stroke="#ef4444"/>
+    <line x1="700" y1="430" x2="780" y2="500" stroke="#ef4444"/>
+  </g>
+
+  <!-- Hop 3 nodes (red - low trust) -->
+  <g filter="url(#glow)">
+    <circle cx="180" cy="80" r="8" fill="#ef4444"/>
+    <circle cx="820" cy="60" r="8" fill="#ef4444"/>
+    <circle cx="860" cy="180" r="8" fill="#ef4444"/>
+    <circle cx="150" cy="420" r="8" fill="#ef4444"/>
+    <circle cx="870" cy="350" r="8" fill="#ef4444"/>
+    <circle cx="780" cy="500" r="8" fill="#ef4444"/>
+  </g>
+
+  <!-- Hop 2 nodes (yellow - medium trust) -->
+  <g filter="url(#glow)">
+    <circle cx="280" cy="120" r="12" fill="#eab308"/>
+    <circle cx="320" cy="250" r="12" fill="#eab308"/>
+    <circle cx="720" cy="100" r="12" fill="#eab308"/>
+    <circle cx="750" cy="200" r="12" fill="#eab308"/>
+    <circle cx="240" cy="380" r="12" fill="#eab308"/>
+    <circle cx="760" cy="320" r="12" fill="#eab308"/>
+    <circle cx="700" cy="430" r="12" fill="#eab308"/>
+    <circle cx="380" cy="500" r="12" fill="#eab308"/>
+  </g>
+
+  <!-- Hop 1 nodes (green - high trust) -->
+  <g filter="url(#glow)">
+    <circle cx="380" cy="180" r="16" fill="#22c55e"/>
+    <circle cx="620" cy="160" r="16" fill="#22c55e"/>
+    <circle cx="350" cy="320" r="16" fill="#22c55e"/>
+    <circle cx="640" cy="350" r="16" fill="#22c55e"/>
+    <circle cx="450" cy="420" r="16" fill="#22c55e"/>
+  </g>
+
+  <!-- Center node (blue - you) -->
+  <circle cx="500" cy="280" r="35" fill="rgba(99,102,241,0.3)" filter="url(#glow)"/>
+  <circle cx="500" cy="280" r="24" fill="#6366f1" filter="url(#glow)"/>
+
+  <!-- Text -->
+  <text x="600" y="560" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle">Playground</text>
+  <text x="600" y="600" font-family="system-ui, -apple-system, sans-serif" font-size="22" fill="rgba(255,255,255,0.7)" text-anchor="middle">Visualize Your Trust Network</text>
+
+  <!-- Legend -->
+  <g transform="translate(950, 480)">
+    <circle cx="0" cy="0" r="6" fill="#6366f1"/>
+    <text x="15" y="5" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)">You</text>
+    <circle cx="0" cy="25" r="6" fill="#22c55e"/>
+    <text x="15" y="30" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)">1 hop</text>
+    <circle cx="0" cy="50" r="6" fill="#eab308"/>
+    <text x="15" y="55" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)">2 hops</text>
+    <circle cx="0" cy="75" r="6" fill="#ef4444"/>
+    <text x="15" y="80" font-family="system-ui, sans-serif" font-size="14" fill="rgba(255,255,255,0.8)">3+ hops</text>
+  </g>
+</svg>
